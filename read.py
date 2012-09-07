@@ -12,6 +12,7 @@ import db
 android_root = 'store/apps'
 android_categories = 'category/APPLICATION'
 
+
 def categories_read_main():
     url = '/%s/%s'%(android_root, android_categories)
     print '** categories main %s **'%(url)
@@ -328,8 +329,8 @@ def http_post(host, url, params, headers):
 
 if __name__ == '__main__':
     db.db_init()
-    #categories_read_main()
-    #category_read_main()
+    categories_read_main()
+    category_read_main()
     app_read_main()
     #a = httplib.HTTPSConnection('')
     '''

@@ -22,12 +22,41 @@ headers = {
 }
 headers = {}
 
+# https does not requires proxy configuration
+# http requires proxy configuration, please use get_conn_http_proxy
+host_proxy = '128.243.253.109'
+port_proxy = 8080
+url_proxy = 'https://play.google.com'
+
+
 def get_conn_https(host):
     conn = httplib.HTTPSConnection(host=host, port=port_https, strict=strict, timeout=timeout, source_address=source_address)
     return conn
+# proxy setting for http (https does not need proxy setting)
+def get_conn_http_proxy():
+    conn = httplib.HTTPConnection(host=host_proxy, port=port_proxy, strict=strict, timeout=timeout, source_address=source_address)
+    return conn
 
+# this is for proxy setting
+conn = get_conn_http_proxy()
 conn = get_conn_https(host)
 
+# proxy setting for http (https does not need proxy setting)
+def use_httplib_http_proxy(url, host, headers):
+    global conn
+    try:
+        if conn == None:
+            print conn, type(conn)
+            conn = get_conn_http_proxy(host_proxy)
+        url = url_proxy+url
+        conn.request(method='GET', url=url, headers=headers)
+        status, body = use_httplib_https_resp(conn)
+        return status, body
+    except Exception as e:
+        print '####exception', e, type(conn), conn
+        conn.close()
+        conn = None
+        return -1, e
 def use_httplib_https(url, host, headers):
     global conn
     try:
@@ -35,7 +64,6 @@ def use_httplib_https(url, host, headers):
             print conn, type(conn)
             conn = get_conn_https(host)
         conn.request(method='GET', url=url, headers=headers)
-        #print '**ready'
         status, body = use_httplib_https_resp(conn)
         return status, body
     except Exception as e:
