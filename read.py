@@ -98,6 +98,7 @@ def app_read_main():
     for row in rows:
         app_id = row[0]
         app_read(app_id)
+        break
 
 def app_read(app_id):
     #app_id = 'com.tencent.mm'
@@ -109,13 +110,13 @@ def app_read(app_id):
         print status, 'app_read'
         return status, app_id
     soup = BeautifulSoup(body)
-    app_read_banner(soup)
-    app_read_tab_overview(soup)
-    app_read_tab_review(soup)
-    app_read_tab_permission(soup)
+    app_read_banner(app_id, soup)
+    app_read_tab_overview(app_id, soup)
+    app_read_tab_review(app_id, soup)
+    app_read_tab_permission(app_id, soup)
 
 
-def app_read_banner(soup):
+def app_read_banner(app_id, soup):
     banner_title_fa = soup.find_all(name='td', attrs={'class':'doc-banner-title-container'})
     if len(banner_title_fa) != 1:
         print 'error: banner title '
@@ -131,17 +132,17 @@ def app_read_banner(soup):
     if not banner_title_f.a.text == None:
         print 'except'
     banner_developer_name = banner_title_f.a.text
-    print banner_title, banner_developer_href, banner_developer_name
     banner_annotation_fa = soup.find_all(name='div', attrs={'class':'badges-badge-title goog-inline-block'})
     for banner_annotation in banner_annotation_fa:
-        banner_annotation_text = banner_annotation.text
-        print banner_annotation_text
+        banner_annotation_text = banner_annotation.text.strip()
+        db.db_execute_g(db.sql_app_awards_insert, (app_id, banner_annotation_text))
     banner_icon_fa = soup.find_all(name='div', attrs={'class':'doc-banner-icon'})
     for banner_icon in banner_icon_fa:
         if banner_icon.img != None:
             if banner_icon.img.has_key('src'):
                 banner_icon_src = banner_icon.img['src']
                 print banner_icon_src
+                ### do i need this part?
     rating_price_fa = soup.find_all(name='td', attrs={'class':'doc-details-ratings-price'})
     if len(rating_price_fa) != 1:
         print 'except'
@@ -168,9 +169,10 @@ def app_read_banner(soup):
         price = price_f.text
         price = price.upper().replace('BUY', '').strip()
         print price
+    print banner_title, banner_developer_href, banner_developer_name
         
 
-def app_read_tab_overview(soup):
+def app_read_tab_overview(app_id, soup):
     app_read_metadata(soup)
     app_read_overview(soup)
     app_read_screenshot(soup)
@@ -256,7 +258,7 @@ def app_read_video(soup):
                 video = video_f['value']
                 print video
 
-def app_read_tab_review(soup):
+def app_read_tab_review(app_id, soup):
     tab_review = soup.find_all(name='div', attrs={'class':'doc-reviews padded-content2'})
     if len(tab_review) <= 0:
         print 'except'
@@ -286,7 +288,7 @@ def app_read_tab_review(soup):
     ############# how to get review all out? need to look at the javascript 
 
 
-def app_read_tab_permission(soup):
+def app_read_tab_permission(app_id, soup):
     tab_permissions_fa = soup.find_all(name='div', attrs={'class':'doc-specs padded-content2'})
     if len(tab_permissions_fa) <= 0:
         print 'except'
@@ -328,9 +330,9 @@ def http_post(host, url, params, headers):
 
 
 if __name__ == '__main__':
-    db.db_init()
-    categories_read_main()
-    category_read_main()
+    #db.db_init()
+    #categories_read_main()
+    #category_read_main()
     app_read_main()
     #a = httplib.HTTPSConnection('')
     '''

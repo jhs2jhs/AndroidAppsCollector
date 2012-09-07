@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS category_read (
 CREATE TABLE IF NOT EXISTS app (
   app_id TEXT NOT NULL UNIQUE, 
   title TEXT,
+  icon TEXT, 
   developer_name TEXT,
+  developer_href TEXT, 
   developer_website TEXT, 
   developer_email TEXT, 
   developer_privacy TEXT, 
@@ -145,6 +147,12 @@ INSERT OR IGNORE INTO app (app_id) VALUES (?)
 '''
 sql_app_read_get = '''
 SELECT app_id FROM app WHERE read_status = 0
+'''
+sql_app_banner_update = '''
+UPDATE app SET title=?, developer_name=?, developer_href=?, developer_website, developer_email, 
+'''
+sql_app_awards_insert = '''
+INSERT OR IGNORE INTO awards (app_id, award) VALUES (?,?)
 '''
 
 
