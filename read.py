@@ -117,59 +117,52 @@ def app_read(app_id):
 
 
 def app_read_banner(app_id, soup):
+    banner_title = ''
+    banner_developer_href = ''
+    banner_developer_name = ''
+    banner_icon_src = ''
+    rating_figure = ''
+    raters = ''
+    price = ''
     banner_title_fa = soup.find_all(name='td', attrs={'class':'doc-banner-title-container'})
-    if len(banner_title_fa) != 1:
-        print 'error: banner title '
-    banner_title_f = banner_title_fa[0]
-    if banner_title_f.h1 == None:
-        print 'except'
-    banner_title = banner_title_f.h1.text
-    if banner_title_f.a == None:
-        print 'except'
-    if not banner_title_f.a.has_key('href'):
-        print 'except'
-    banner_developer_href = banner_title_f.a['href']
-    if not banner_title_f.a.text == None:
-        print 'except'
-    banner_developer_name = banner_title_f.a.text
-    banner_annotation_fa = soup.find_all(name='div', attrs={'class':'badges-badge-title goog-inline-block'})
-    for banner_annotation in banner_annotation_fa:
-        banner_annotation_text = banner_annotation.text.strip()
-        db.db_execute_g(db.sql_app_awards_insert, (app_id, banner_annotation_text))
+    if len(banner_title_fa) == 1:
+        banner_title_f = banner_title_fa[0]
+        if banner_title_f.h1 != None:
+            banner_title = banner_title_f.h1.text
+        if banner_title_f.a != None:
+            if banner_title_f.a.has_key('href'):
+                banner_developer_href = banner_title_f.a['href'].strip()
+            if banner_title_f.a.text != None:
+                banner_developer_name = banner_title_f.a.text.strip()
     banner_icon_fa = soup.find_all(name='div', attrs={'class':'doc-banner-icon'})
     for banner_icon in banner_icon_fa:
         if banner_icon.img != None:
             if banner_icon.img.has_key('src'):
-                banner_icon_src = banner_icon.img['src']
-                print banner_icon_src
-                ### do i need this part?
+                banner_icon_src = banner_icon.img['src'].strip()
+    banner_annotation_fa = soup.find_all(name='div', attrs={'class':'badges-badge-title goog-inline-block'})
+    for banner_annotation in banner_annotation_fa:
+        banner_annotation_text = banner_annotation.text.strip()
+        db.db_execute_g(db.sql_app_awards_insert, (app_id, banner_annotation_text))
     rating_price_fa = soup.find_all(name='td', attrs={'class':'doc-details-ratings-price'})
-    if len(rating_price_fa) != 1:
-        print 'except'
-    rating_fa = rating_price_fa[0].find_all(name='div', attrs={'class':'ratings goog-inline-block'})
-    for rating_f in rating_fa:
-        if rating_f.has_key('title'):
-            rating_title = rating_f['title']
-            rating_figure = rating_title.split(' ')
-            if len(rating_figure) >= 2:
-                rating_figure = rating_figure[1]
-            else:
-                rating_figure = 'None'
-            print rating_title, rating_figure
-            if rating_f.next_sibling == None:
-                print 'except'
-            raters_f = rating_f.next_sibling
-            if raters_f.text == None:
-                print 'except'
-            raters = raters_f.text
-            raters = raters.replace('(', '').replace(')', '').strip()
-            print raters
-    price_fa = rating_price_fa[0].find_all(name='span', attrs={'class':'buy-button-price'})
-    for price_f in price_fa:
-        price = price_f.text
-        price = price.upper().replace('BUY', '').strip()
-        print price
+    if len(rating_price_fa) == 1:
+        rating_fa = rating_price_fa[0].find_all(name='div', attrs={'class':'ratings goog-inline-block'})
+        for rating_f in rating_fa:
+            if rating_f.has_key('title'):
+                rating_title = rating_f['title']
+                rating_figure = rating_title.split(' ')
+                if len(rating_figure) >= 2:
+                    rating_figure = rating_figure[1].strip()
+            if rating_f.next_sibling != None:
+                raters_f = rating_f.next_sibling
+                if raters_f.text != None:
+                    raters = raters_f.text
+                    raters = raters.replace('(', '').replace(')', '').strip()
+        price_fa = rating_price_fa[0].find_all(name='span', attrs={'class':'buy-button-price'})
+        for price_f in price_fa:
+            price = price_f.text
+            price = price.upper().replace('BUY', '').strip()
     print banner_title, banner_developer_href, banner_developer_name
+    # adding into database now 
         
 
 def app_read_tab_overview(app_id, soup):
