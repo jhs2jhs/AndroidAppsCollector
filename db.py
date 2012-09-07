@@ -14,8 +14,9 @@ CREATE TABLE IF NOT EXISTS category_read (
   cate_name TEXT NOT NULL, 
   cate_path TEXT NOT NULL,
   cate_param TEXT NOT NULL, 
+  cate_type TEXT NOT NULL,
   read_status TEXT NOT NULL DEFAULT 0,
-  UNIQUE (cate_path, cate_param)
+  UNIQUE (cate_path, cate_param, cate_type)
 );
 CREATE TABLE IF NOT EXISTS app (
   app_id TEXT NOT NULL UNIQUE, 
@@ -117,12 +118,35 @@ def db_execute_g(sql, params): # in general
     db.commit()
     c.close()
 
+def db_get_g(sql, params):
+    global db
+    if db == None:
+        db = get_db()
+    c = db.cursor()
+    c.execute(sql, params)
+    r = c.fetchall()
+    c.close()
+    return r
+
 sql_cate_insert = '''
 INSERT OR IGNORE INTO category (cate_group, cate_name, cate_path, cate_create_date) VALUES (?,?,?,?)
 '''
 sql_cate_read_insert = '''
-INSERT OR IGNORE INTO category_read (cate_name, cate_path, cate_param) VALUES (?,?,?)
+INSERT OR IGNORE INTO category_read (cate_name, cate_path, cate_param, cate_type) VALUES (?,?,?,?)
 '''
+sql_cate_read_update = '''
+UPDATE category_read SET read_status = 1 WHERE cate_name=? AND cate_path=? AND cate_param=? AND cate_type=?
+'''
+sql_cate_read_get = '''
+SELECT cate_name, cate_path, cate_param, cate_type FROM category_read WHERE read_status = 0
+'''
+sql_app_insert = '''
+INSERT OR IGNORE INTO app (app_id) VALUES (?)
+'''
+sql_app_read_get = '''
+SELECT app_id FROM app WHERE read_status = 0
+'''
+
 
 
 if __name__ == '__main__':

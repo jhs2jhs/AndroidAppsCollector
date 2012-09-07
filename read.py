@@ -12,11 +12,12 @@ import db
 android_root = 'store/apps'
 android_categories = 'category/APPLICATION'
 
-def categories_read():
+def categories_read_main():
     url = '/%s/%s'%(android_root, android_categories)
     print '** categories main %s **'%(url)
     status, body = http.use_httplib_https(url, host, headers)
     if status != 200:
+        print status, 'app home https connection error'
         raise Exception('app home https connection error')
     soup = BeautifulSoup(body)
     divs = soup.body.find_all(name='div', attrs={'class':'padded-content3 app-home-nav'})
@@ -35,37 +36,27 @@ def categories_read():
                 raise Exception('app home nav li a == None')
             if not a.has_key('href'):
                 raise Exception('app home nav li a href has not href')
-            cate_path = urlparse.urlparse(a['href']).path
-            cate_name = a.text
+            cate_path = urlparse.urlparse(a['href']).path.strip()
+            cate_name = a.text.strip()
             db.db_execute_g(db.sql_cate_insert, (cate_group_name, cate_name, cate_path, str(datetime.now())))
             cate_i = 0
             while cate_i < 504:
-                db.db_execute_g(db.sql_cate_read_insert, (cate_name, cate_path, cate_i))
+                db.db_execute_g(db.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_free'))
+                db.db_execute_g(db.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_paid'))
                 cate_i = cate_i + 24
 
-def category_read(cate_path, cate_name):
-    cate_type = 'topselling_free'
-    category_read_base(cate_path, cate_name, cate_type)
-    print '====='
-    #cate_type = 'topselling_paid'
-    #category_read_base(cate_path, cate_name, cate_type)
-    print '=='
+def category_read_main():
+    rows = db.db_get_g(db.sql_cate_read_get, ())
+    for row in rows:
+        cate_name = row[0]
+        cate_path = row[1]
+        cate_param = row[2]
+        cate_type = row[3]
+        category_read(cate_path, cate_name, cate_type, cate_param)
 
-def category_read_base(cate_path, cate_name, cate_type):
-    cate_start = 0
-    i = 0
-    status = 200
-    while status != 403:
-         status, cate_current = category_read_loop(cate_path, cate_name, cate_type, cate_start)
-         #print status, cate_start, cate_current
-         i = i + 1
-         cate_start = cate_start + 24
-         break
-    print status, cate_start, cate_current, cate_path
-
-def category_read_loop(cate_path, cate_name, cate_type, cate_start):
-    url = '%s/collection/%s?start=%d&num=24'%(cate_path, cate_type, cate_start)
-    #print '** category %s **'%(url)
+def category_read(cate_path, cate_name, cate_type, cate_start):
+    url = '%s/collection/%s?start=%s&num=24'%(cate_path, cate_type, cate_start)
+    print '** category %s **'%(url)
     status, body = http.use_httplib_https(url, host, headers)
     #print status
     #print body
@@ -79,7 +70,6 @@ def category_read_loop(cate_path, cate_name, cate_type, cate_start):
     soup = BeautifulSoup(body)
     divs = soup.find_all(name='div', attrs={'class':'snippet snippet-medium'})
     for div in divs:
-        #print div
         rank_divs = div.find_all(name='div', attrs={'class':'ordinal-value'})
         if len(rank_divs) != 1:
             raise Exception('category div ordinal-value len != 1')
@@ -98,24 +88,33 @@ def category_read_loop(cate_path, cate_name, cate_type, cate_start):
             href_id = href_qs['id'][0]
         if href_id == None:
             raise Exception('category div a href urlparse wrong')
-        app_id = href_id
-        #app_url = {'id':href_id}
-        #app_url = urllib.urlencode(app_url)
-        #app_url = '%s?%s'%(href_path, app_url)
-        #print rank, app_url
+        app_id = href_id.strip()
+        db.db_execute_g(db.sql_app_insert, (app_id, ))
+    db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_start, cate_type, ))
+
+def app_read_main():
+    rows = db.db_get_g(db.sql_app_read_get, ())
+    for row in rows:
+        app_id = row[0]
         app_read(app_id)
-        break
-    return status, cate_start
 
 def app_read(app_id):
-    app_id = 'com.tencent.mm'
+    #app_id = 'com.tencent.mm'
     url = '/%s/details?id=%s'%(android_root, app_id)
     print '** app %s **'%(url)
     status, body = http.use_httplib_https(url, host, headers)
     if status != 200:
         ## exception
+        print status, 'app_read'
         return status, app_id
     soup = BeautifulSoup(body)
+    app_read_banner(soup)
+    app_read_tab_overview(soup)
+    app_read_tab_review(soup)
+    app_read_tab_permission(soup)
+
+
+def app_read_banner(soup):
     banner_title_fa = soup.find_all(name='td', attrs={'class':'doc-banner-title-container'})
     if len(banner_title_fa) != 1:
         print 'error: banner title '
@@ -168,6 +167,16 @@ def app_read(app_id):
         price = price_f.text
         price = price.upper().replace('BUY', '').strip()
         print price
+        
+
+def app_read_tab_overview(soup):
+    app_read_metadata(soup)
+    app_read_overview(soup)
+    app_read_screenshot(soup)
+    app_read_video(soup)
+
+
+def app_read_metadata(soup):
     metadata_fa = soup.find_all(name='div', attrs={'class':'doc-metadata'})
     #print metadata_fa
     for metadata_f in metadata_fa:
@@ -204,6 +213,9 @@ def app_read(app_id):
             meta_size_f = meta_size_fa[0].next_sibling
             meta_size = meta_size_f.text
             print meta_size
+    
+
+def app_read_overview(soup):
     overview_fa = soup.find_all(name='div', attrs={'class':'doc-overview'})
     #print overview_fa
     for overview_f in overview_fa:
@@ -222,6 +234,8 @@ def app_read(app_id):
                 developer_email = developer_email_f['href']
                 developer_email = developer_email.replace('mailto:', '').strip()
                 print developer_email
+
+def app_read_screenshot(soup):
     screenshots_fa = soup.find_all(name='div', attrs={'class':'doc-overview-screenshots'})
     #print screenshots_fa
     for screenshots_f in screenshots_fa:
@@ -230,6 +244,8 @@ def app_read(app_id):
             if screenshot_f.has_key('src'):
                 screenshot = screenshot_f['src']
                 print screenshot
+
+def app_read_video(soup):
     videos_fa = soup.find_all(name='div', attrs={'class':'doc-overview-videos'})
     #print videos_fa
     for videos_f in videos_fa:
@@ -238,6 +254,8 @@ def app_read(app_id):
             if video_f.has_key('value'):
                 video = video_f['value']
                 print video
+
+def app_read_tab_review(soup):
     tab_review = soup.find_all(name='div', attrs={'class':'doc-reviews padded-content2'})
     if len(tab_review) <= 0:
         print 'except'
@@ -265,6 +283,9 @@ def app_read(app_id):
         #print review_content_f.prettify()
         print '=========='
     ############# how to get review all out? need to look at the javascript 
+
+
+def app_read_tab_permission(soup):
     tab_permissions_fa = soup.find_all(name='div', attrs={'class':'doc-specs padded-content2'})
     if len(tab_permissions_fa) <= 0:
         print 'except'
@@ -280,8 +301,7 @@ def app_read(app_id):
                 if 'doc-permission-description' in pcc:
                     perm_each_desc = pc.text
                     print 'individual', perm_each_desc
-        
-    
+
 
 import urllib2
 import urllib
@@ -308,7 +328,9 @@ def http_post(host, url, params, headers):
 
 if __name__ == '__main__':
     db.db_init()
-    categories_read()
+    #categories_read_main()
+    #category_read_main()
+    app_read_main()
     #a = httplib.HTTPSConnection('')
     '''
     url = 'https://play.google.com/store/getreviews'
@@ -342,3 +364,24 @@ if __name__ == '__main__':
             #category_read(cate_path, cate_name)
             #break
         #break
+
+
+'''
+    cate_type = 'topselling_free'
+    category_read_base(cate_path, cate_name, cate_type)
+    cate_type = 'topselling_paid'
+    category_read_base(cate_path, cate_name, cate_type)
+'''
+'''
+def category_read_base(cate_path, cate_name, cate_type):
+    cate_start = 0
+    i = 0
+    status = 200
+    while status != 403:
+         status, cate_current = category_read_loop(cate_path, cate_name, cate_type, cate_start)
+         #print status, cate_start, cate_current
+         i = i + 1
+         cate_start = cate_start + 24
+         break
+    print status, cate_start, cate_current, cate_path
+'''
