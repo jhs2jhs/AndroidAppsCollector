@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS app (
   installs TEXT, 
   file_size TEXT, 
   price TEXT, 
-  content_rating TEXT, 
+  content_rating TEXT, -- what is this?
   rating_total TEXT,
   rating_average TEXT DEFAULT 0,
   rating_0 TEXT DEFAULT 0,
@@ -48,6 +48,16 @@ CREATE TABLE IF NOT EXISTS app (
   scrape_create_date TEXT,
   scrape_update_date TEXT,
   read_status TEXT DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS share (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  app_id TEXT NOT NULL,
+  google_plus_href TEXT,
+  google_plus_figure TEXT,
+  read_status TEXT DEFAULT 0,
+  google_create_date TEXT, 
+  google_update_date TEXT, 
+  UNIQUE (app_id, google_plus_href)
 );
 CREATE TABLE IF NOT EXISTS awards (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -149,10 +159,28 @@ sql_app_read_get = '''
 SELECT app_id FROM app WHERE read_status = 0
 '''
 sql_app_banner_update = '''
-UPDATE app SET title=?, developer_name=?, developer_href=?, developer_website, developer_email, 
+UPDATE app SET title=?, icon=?, developer_name=?, developer_href=?, rating_average=?, rating_total=?, price=? WHERE app_id = ?
 '''
 sql_app_awards_insert = '''
 INSERT OR IGNORE INTO awards (app_id, award) VALUES (?,?)
+'''
+sql_app_google_plus_insert = '''
+INSERT OR IGNORE INTO share (app_id, google_plus_href) VALUES (?,?)
+'''
+sql_app_metadata_update = '''
+UPDATE app SET update_date=?, current_version=?, requires_android=?, installs=?, file_size=? WHERE app_id = ?
+'''
+sql_app_overview_update = '''
+UPDATE app SET desc=?, developer_website=?, developer_email=?, developer_privacy=? WHERE app_id=?
+'''
+sql_app_screenshot_insert = '''
+INSERT OR IGNORE INTO screenshots (app_id, screenshot) VALUES (?,?)
+'''
+sql_app_video_insert = '''
+INSERT OR IGNORE INTO videos (app_id, video) VALUES (?,?)
+'''
+sql_app_perm_insert = '''
+INSERT OR IGNORE INTO permission (app_id, perm_group, perm_individual) VALUES (?,?,?)
 '''
 
 

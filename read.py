@@ -161,97 +161,98 @@ def app_read_banner(app_id, soup):
         for price_f in price_fa:
             price = price_f.text
             price = price.upper().replace('BUY', '').strip()
-    print banner_title, banner_developer_href, banner_developer_name
-    # adding into database now 
+    db.db_execute_g(db.sql_app_banner_update, (banner_title, banner_icon_src, banner_developer_name, banner_developer_href, rating_figure, raters, price, app_id))
         
 
 def app_read_tab_overview(app_id, soup):
-    app_read_metadata(soup)
-    app_read_overview(soup)
-    app_read_screenshot(soup)
-    app_read_video(soup)
+    app_read_metadata(app_id, soup)
+    app_read_overview(app_id, soup)
+    app_read_screenshot(app_id, soup)
+    app_read_video(app_id, soup)
 
 
-def app_read_metadata(soup):
+def app_read_metadata(app_id, soup):
+    meta_update = ''
+    meta_current = ''
+    meta_require = ''
+    meta_install = ''
+    meta_size = ''
     metadata_fa = soup.find_all(name='div', attrs={'class':'doc-metadata'})
-    #print metadata_fa
     for metadata_f in metadata_fa:
         meta_google_plus_fa = metadata_f.find_all(name='div', attrs={'class':'plus-share-container'})
         for meta_google_plus_f in meta_google_plus_fa:
             if len(meta_google_plus_f.contents)>0 and meta_google_plus_f.contents[0].has_key('href'):
-                meta_google_plus_href = meta_google_plus_f.contents[0]['href']
-                print meta_google_plus_href
-                'https://plusone.google.com/u/0/_/+1/fastbutton?url=https%3A%2F%2Fmarket.android.com%2Fdetails%3Fid%3Dcom.rovio.angrybirds'
+                meta_google_plus_href = meta_google_plus_f.contents[0]['href'].strip()
+                db.db_execute_g(db.sql_app_google_plus_insert, (app_id, meta_google_plus_href))
         meta_update_fa = metadata_f.find_all(name='dt', text='Updated:')
         if len(meta_update_fa) > 0 and meta_update_fa[0].next_sibling != None:
             meta_update_f = meta_update_fa[0].next_sibling
             if meta_update_f.time != None:
-                meta_update = meta_update_f.time.text
-                print meta_update
+                meta_update = meta_update_f.time.text.strip()
         meta_current_fa = metadata_f.find_all(name='dt', text='Current Version:')
         if len(meta_current_fa) > 0 and meta_current_fa[0].next_sibling != None:
             meta_current_f = meta_current_fa[0].next_sibling
-            meta_current = meta_current_f.text
-            print meta_current
+            meta_current = meta_current_f.text.strip()
         meta_require_fa = metadata_f.find_all(name='dt', text='Requires Android:')
         if len(meta_require_fa) > 0 and meta_require_fa[0].next_sibling != None:
             meta_require_f = meta_require_fa[0].next_sibling
-            meta_require = meta_require_f.text
-            print meta_require
+            meta_require = meta_require_f.text.strip()
         meta_install_fa = metadata_f.find_all(name='dt', text='Installs:')
         if len(meta_install_fa) > 0 and meta_install_fa[0].next_sibling != None:
             meta_install_f = meta_install_fa[0].next_sibling
             meta_install = meta_install_f.text
             meta_install = meta_install.upper().replace('LAST 30 DAYS', '').strip()
-            print meta_install
         meta_size_fa = metadata_f.find_all(name='dt', text='Size:')
         if len(meta_size_fa) > 0 and meta_size_fa[0].next_sibling != None:
             meta_size_f = meta_size_fa[0].next_sibling
-            meta_size = meta_size_f.text
-            print meta_size
+            meta_size = meta_size_f.text.strip()
+    db.db_execute_g(db.sql_app_metadata_update, (meta_update, meta_current, meta_require, meta_install, meta_size, app_id))
     
 
-def app_read_overview(soup):
+def app_read_overview(app_id, soup):
+    desc = ''
+    developer_website = ''
+    developer_email = ''
+    developer_privacy = ''
     overview_fa = soup.find_all(name='div', attrs={'class':'doc-overview'})
-    #print overview_fa
     for overview_f in overview_fa:
         desc_fa = overview_f.find_all(name='div', attrs={'id':'doc-original-text'})
         for desc_f in desc_fa:
-            desc = desc_f.text
-            print desc
+            desc = desc_f.text.strip()
         developer_website_fa = overview_f.find_all(name='a', text="Visit Developer's Website")
         for developer_website_f in developer_website_fa:
             if developer_website_f.has_key('href'):
-                developer_website = developer_website_f['href']
-                print developer_website
+                developer_website = developer_website_f['href'].strip()
         developer_email_fa = overview_f.find_all(name='a', text='Email Developer')
         for developer_email_f in developer_email_fa:
             if developer_email_f.has_key('href'):
                 developer_email = developer_email_f['href']
                 developer_email = developer_email.replace('mailto:', '').strip()
-                print developer_email
+        developer_privacy_fa = overview_f.find_all(name='a', text='Privacy Policy')
+        for developer_privacy_f in developer_privacy_fa:
+            if developer_privacy_f.has_key('href'):
+                developer_privacy = developer_privacy_f['href'].strip()
+    db.db_execute_g(db.sql_app_overview_update, (desc, developer_website, developer_email, developer_privacy, app_id))
 
-def app_read_screenshot(soup):
+def app_read_screenshot(app_id, soup):
     screenshots_fa = soup.find_all(name='div', attrs={'class':'doc-overview-screenshots'})
-    #print screenshots_fa
     for screenshots_f in screenshots_fa:
         screenshot_fa = screenshots_f.find_all(name='img', attrs={'itemprop':'screenshots'})
         for screenshot_f in screenshot_fa:
             if screenshot_f.has_key('src'):
-                screenshot = screenshot_f['src']
-                print screenshot
+                screenshot = screenshot_f['src'].strip()
+                db.db_execute_g(db.sql_app_screenshot_insert, (app_id, screenshot))
 
-def app_read_video(soup):
+def app_read_video(app_id, soup):
     videos_fa = soup.find_all(name='div', attrs={'class':'doc-overview-videos'})
-    #print videos_fa
     for videos_f in videos_fa:
         video_fa = videos_f.find_all(name='param', attrs={'name':'movie'})
         for video_f in video_fa:
             if video_f.has_key('value'):
-                video = video_f['value']
-                print video
+                video = video_f['value'].strip()
+                db.db_execute_g(db.sql_app_video_insert, (app_id, video))
 
-def app_read_tab_review(app_id, soup):
+def app_read_tab_review(app_id, soup): ## needs to work out
     tab_review = soup.find_all(name='div', attrs={'class':'doc-reviews padded-content2'})
     if len(tab_review) <= 0:
         print 'except'
@@ -282,6 +283,7 @@ def app_read_tab_review(app_id, soup):
 
 
 def app_read_tab_permission(app_id, soup):
+    perm_group_title = ''
     tab_permissions_fa = soup.find_all(name='div', attrs={'class':'doc-specs padded-content2'})
     if len(tab_permissions_fa) <= 0:
         print 'except'
@@ -292,11 +294,10 @@ def app_read_tab_permission(app_id, soup):
             if pc.has_key('class'):
                 pcc = pc['class']
                 if 'doc-permission-group-title' in pcc:
-                    perm_group_title = pc.text
-                    print 'group', perm_group_title
+                    perm_group_title = pc.text.strip()
                 if 'doc-permission-description' in pcc:
-                    perm_each_desc = pc.text
-                    print 'individual', perm_each_desc
+                    perm_each_desc = pc.text.strip()
+                    db.db_execute_g(db.sql_app_perm_insert, (app_id, perm_group_title, perm_each_desc))
 
 
 import urllib2
@@ -323,7 +324,7 @@ def http_post(host, url, params, headers):
 
 
 if __name__ == '__main__':
-    #db.db_init()
+    db.db_init()
     #categories_read_main()
     #category_read_main()
     app_read_main()
@@ -381,3 +382,7 @@ def category_read_base(cate_path, cate_name, cate_type):
          break
     print status, cate_start, cate_current, cate_path
 '''
+
+
+# google plus share
+'https://plusone.google.com/u/0/_/+1/fastbutton?url=https%3A%2F%2Fmarket.android.com%2Fdetails%3Fid%3Dcom.rovio.angrybirds'
