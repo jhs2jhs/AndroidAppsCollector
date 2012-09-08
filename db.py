@@ -31,11 +31,11 @@ CREATE TABLE IF NOT EXISTS app (
   update_date TEXT, 
   current_version TEXT, 
   requires_android TEXT, 
-  category TEXT, 
+  category TEXT,
   installs TEXT, 
   file_size TEXT, 
   price TEXT, 
-  content_rating TEXT, -- what is this?
+  content_rating TEXT, 
   rating_total TEXT,
   rating_average TEXT DEFAULT 0,
   rating_0 TEXT DEFAULT 0,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS app (
   rating_3 TEXT DEFAULT 0,
   rating_4 TEXT DEFAULT 0,
   rating_5 TEXT DEFAULT 0,
-  rank TEXT DEFAULT -1, 
+  rank TEXT DEFAULT -1,  
   scrape_create_date TEXT,
   scrape_update_date TEXT,
   read_status TEXT DEFAULT 0
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS videos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   app_id TEXT NOT NULL,
   video TEXT NOT NULL, 
-  watched TEXT, 
+  watched TEXT DEFAULT -1, 
   watched_create_date TEXT, 
   watched_update_date TEXT, 
   UNIQUE (app_id, video)
@@ -92,6 +92,13 @@ CREATE TABLE IF NOT EXISTS review (
   review_star TEXT,
   review_create_date TEXT, 
   review_update_date TEXT
+);
+CREATE TABLE IF NOT EXISTS review_read (
+  app_id TEXT NOT NULL UNIQUE,
+  read_status TEXT DEFAULT 0,
+  pageNum TEXT NOT NULL DEFAULT 0,
+  review_type TEXT DEFAULT 1, 
+  review_sort_order TEXT DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS permission (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -155,6 +162,9 @@ SELECT cate_name, cate_path, cate_param, cate_type FROM category_read WHERE read
 sql_app_insert = '''
 INSERT OR IGNORE INTO app (app_id) VALUES (?)
 '''
+sql_app_insert_with_rank = '''
+INSERT OR IGNORE INTO app (app_id, rank) VALUES (?,?)
+'''
 sql_app_read_get = '''
 SELECT app_id FROM app WHERE read_status = 0
 '''
@@ -168,7 +178,7 @@ sql_app_google_plus_insert = '''
 INSERT OR IGNORE INTO share (app_id, google_plus_href) VALUES (?,?)
 '''
 sql_app_metadata_update = '''
-UPDATE app SET update_date=?, current_version=?, requires_android=?, installs=?, file_size=? WHERE app_id = ?
+UPDATE app SET update_date=?, current_version=?, requires_android=?, installs=?, file_size=?, category=?, content_rating=? WHERE app_id = ?
 '''
 sql_app_overview_update = '''
 UPDATE app SET desc=?, developer_website=?, developer_email=?, developer_privacy=? WHERE app_id=?
@@ -181,6 +191,12 @@ INSERT OR IGNORE INTO videos (app_id, video) VALUES (?,?)
 '''
 sql_app_perm_insert = '''
 INSERT OR IGNORE INTO permission (app_id, perm_group, perm_individual) VALUES (?,?,?)
+'''
+sql_app_rating_update = '''
+UPDATE app SET rating_0=?, rating_1=?, rating_2=?, rating_3=?, rating_4=?, rating_5=? WHERE app_id=?
+'''
+sql_video_get = '''
+SELECT app_id, video, watched FROM videos WHERE watched = -1
 '''
 
 

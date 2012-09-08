@@ -72,7 +72,7 @@ def use_httplib_https(url, host, headers):
         conn = None
         return -1, e
 
-def use_httplib__https_redirect(host, url, headers):
+def use_httplib_https_redirect(host, url, headers):
     print host, url, "======= redirect ========"
     try:
         conn_c = httplib.HTTPSConnection(host=host) # leave port as default?

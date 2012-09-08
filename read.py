@@ -8,6 +8,7 @@ from datetime import datetime
 import http
 from http import host, headers
 import db
+import err
 
 android_root = 'store/apps'
 android_categories = 'category/APPLICATION'
@@ -18,8 +19,7 @@ def categories_read_main():
     print '** categories main %s **'%(url)
     status, body = http.use_httplib_https(url, host, headers)
     if status != 200:
-        print status, 'app home https connection error'
-        raise Exception('app home https connection error')
+        raise Exception('app home https connection error: %s'%(str(status)))
     soup = BeautifulSoup(body)
     divs = soup.body.find_all(name='div', attrs={'class':'padded-content3 app-home-nav'})
     for div in divs:
@@ -53,28 +53,26 @@ def category_read_main():
         cate_path = row[1]
         cate_param = row[2]
         cate_type = row[3]
-        category_read(cate_path, cate_name, cate_type, cate_param)
+        try:
+            category_read(cate_path, cate_name, cate_type, cate_param)
+            db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_param, cate_type, ))
+        except Exception as e:
+            err.except_p(e)
+            
 
 def category_read(cate_path, cate_name, cate_type, cate_start):
     url = '%s/collection/%s?start=%s&num=24'%(cate_path, cate_type, cate_start)
     print '** category %s **'%(url)
     status, body = http.use_httplib_https(url, host, headers)
-    #print status
-    #print body
-    if status == 403:
-        #raise Exception('exeet the amount of request')
-        return status, cate_start
     if status != 200:
-        print '$$$$$$$$$$', status, url
-        #raise Exception('app category https connection error')
-        return status, cate_start
+        raise Exception('app category https connection error')
     soup = BeautifulSoup(body)
     divs = soup.find_all(name='div', attrs={'class':'snippet snippet-medium'})
     for div in divs:
         rank_divs = div.find_all(name='div', attrs={'class':'ordinal-value'})
         if len(rank_divs) != 1:
             raise Exception('category div ordinal-value len != 1')
-        rank = rank_divs[0].text
+        rank = rank_divs[0].text.strip()
         href_as = div.find_all(name='a', attrs={'class':'title'})
         if len(href_as) != 1:
             raise Exception('category div a href len != 1')
@@ -90,30 +88,29 @@ def category_read(cate_path, cate_name, cate_type, cate_start):
         if href_id == None:
             raise Exception('category div a href urlparse wrong')
         app_id = href_id.strip()
-        db.db_execute_g(db.sql_app_insert, (app_id, ))
-    db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_start, cate_type, ))
+        db.db_execute_g(db.sql_app_insert_with_rank, (app_id, rank))
+    
 
 def app_read_main():
     rows = db.db_get_g(db.sql_app_read_get, ())
     for row in rows:
         app_id = row[0]
         app_read(app_id)
-        break
 
 def app_read(app_id):
-    #app_id = 'com.tencent.mm'
     url = '/%s/details?id=%s'%(android_root, app_id)
     print '** app %s **'%(url)
-    status, body = http.use_httplib_https(url, host, headers)
-    if status != 200:
-        ## exception
-        print status, 'app_read'
-        return status, app_id
-    soup = BeautifulSoup(body)
-    app_read_banner(app_id, soup)
-    app_read_tab_overview(app_id, soup)
-    app_read_tab_review(app_id, soup)
-    app_read_tab_permission(app_id, soup)
+    try:
+        status, body = http.use_httplib_https(url, host, headers)
+        if status != 200:
+            raise Exception('app read https connection error: %s'%(str(status)))
+        soup = BeautifulSoup(body)
+        app_read_banner(app_id, soup)
+        app_read_tab_overview(app_id, soup)
+        app_read_tab_review(app_id, soup)
+        app_read_tab_permission(app_id, soup)
+    except Exception as e:
+        err.except_p(e)
 
 
 def app_read_banner(app_id, soup):
@@ -177,6 +174,8 @@ def app_read_metadata(app_id, soup):
     meta_require = ''
     meta_install = ''
     meta_size = ''
+    meta_category = ''
+    meta_rating = ''
     metadata_fa = soup.find_all(name='div', attrs={'class':'doc-metadata'})
     for metadata_f in metadata_fa:
         meta_google_plus_fa = metadata_f.find_all(name='div', attrs={'class':'plus-share-container'})
@@ -197,6 +196,10 @@ def app_read_metadata(app_id, soup):
         if len(meta_require_fa) > 0 and meta_require_fa[0].next_sibling != None:
             meta_require_f = meta_require_fa[0].next_sibling
             meta_require = meta_require_f.text.strip()
+        meta_category_fa = metadata_f.find_all(name='dt', text='Category:')
+        if len(meta_category_fa) > 0 and meta_category_fa[0].next_sibling != None:
+            meta_category_f = meta_category_fa[0].next_sibling
+            meta_category = meta_category_f.text.strip()
         meta_install_fa = metadata_f.find_all(name='dt', text='Installs:')
         if len(meta_install_fa) > 0 and meta_install_fa[0].next_sibling != None:
             meta_install_f = meta_install_fa[0].next_sibling
@@ -206,7 +209,11 @@ def app_read_metadata(app_id, soup):
         if len(meta_size_fa) > 0 and meta_size_fa[0].next_sibling != None:
             meta_size_f = meta_size_fa[0].next_sibling
             meta_size = meta_size_f.text.strip()
-    db.db_execute_g(db.sql_app_metadata_update, (meta_update, meta_current, meta_require, meta_install, meta_size, app_id))
+        meta_rating_fa = metadata_f.find_all(name='dt', text='Content Rating:')
+        if len(meta_rating_fa) > 0 and meta_rating_fa[0].next_sibling != None:
+            meta_rating_f = meta_rating_fa[0].next_sibling
+            meta_rating = meta_rating_f.text.strip()
+    db.db_execute_g(db.sql_app_metadata_update, (meta_update, meta_current, meta_require, meta_install, meta_size, meta_category, meta_rating, app_id))
     
 
 def app_read_overview(app_id, soup):
@@ -253,40 +260,49 @@ def app_read_video(app_id, soup):
                 db.db_execute_g(db.sql_app_video_insert, (app_id, video))
 
 def app_read_tab_review(app_id, soup): ## needs to work out
+    rating_0 = ''
+    rating_1 = ''
+    rating_2 = ''
+    rating_3 = ''
+    rating_4 = ''
+    rating_5 = ''
     tab_review = soup.find_all(name='div', attrs={'class':'doc-reviews padded-content2'})
     if len(tab_review) <= 0:
-        print 'except'
+        raise Exception('app tab review len <= 0')
     tab_review = tab_review[0]
     review_head_fa = tab_review.find_all(name='div', attrs={'class':'reviews-heading-container'})
     for review_head_f in review_head_fa:
         user_rating_fa = review_head_f.find_all(name='div', attrs={'class':'user-ratings'})
         if len(user_rating_fa) <= 0:
-            print 'except'
+            raise Exception('app tab review user rating len <= 0')
         user_rating_fa = user_rating_fa[0]
         rating_tr_fa = user_rating_fa.find_all(name='span', attrs={'class':'histogram-label'})
         for rating_tr_f in rating_tr_fa:
             rating_star = rating_figure = 'None'
             if rating_tr_f.has_key('data-rating'):
-                rating_star = rating_tr_f['data-rating']
-            #print rating_tr_f.parent.next_s
+                rating_star = rating_tr_f['data-rating'].strip()
             if rating_tr_f.parent != None and rating_tr_f.parent.next_sibling != None:
                 rating_figure = rating_tr_f.parent.next_sibling
                 rating_figure = rating_figure.text.strip()
-            print rating_star, rating_figure
-    #review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-user-reviews-list'})
-    #review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-user-reviews-page num-pagination-page'})
-    review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-reviews-container'})
-    for review_content_f in review_content_fa:
-        #print review_content_f.prettify()
-        print '=========='
-    ############# how to get review all out? need to look at the javascript 
-
+            if rating_star == '0':
+                rating_0 = rating_figure
+            if rating_star == '1':
+                rating_1 = rating_figure
+            if rating_star == '2':
+                rating_2 = rating_figure
+            if rating_star == '3':
+                rating_3 = rating_figure
+            if rating_star == '4':
+                rating_4 = rating_figure
+            if rating_star == '5':
+                rating_5 = rating_figure
+    db.db_execute_g(db.sql_app_rating_update, (rating_0, rating_1, rating_2, rating_3, rating_4, rating_5, app_id))
 
 def app_read_tab_permission(app_id, soup):
     perm_group_title = ''
     tab_permissions_fa = soup.find_all(name='div', attrs={'class':'doc-specs padded-content2'})
     if len(tab_permissions_fa) <= 0:
-        print 'except'
+        raise Exception('app tab permission len <= 0')
     tab_permissions_fa = tab_permissions_fa[0]
     perm_fa = tab_permissions_fa.find_all(name='li', attrs={'class':'doc-permission-group'})
     for perm_f in perm_fa:
@@ -299,6 +315,21 @@ def app_read_tab_permission(app_id, soup):
                     perm_each_desc = pc.text.strip()
                     db.db_execute_g(db.sql_app_perm_insert, (app_id, perm_group_title, perm_each_desc))
 
+
+
+######
+def video_read():
+    rows = db.db_get_g(db.sql_video_get, ())
+    for row in rows:
+        app_id = row[0]
+        video_href = row[1]
+        watched = row[2]
+        video_href_d = video_href.split('/')[-1]
+        video_href_d = video_href_d.split('?')[0].strip()
+        print video_href_d
+
+
+### read review:     #db.db_execute_g(db.sql_app_review_ in ajax
 
 import urllib2
 import urllib
@@ -386,3 +417,12 @@ def category_read_base(cate_path, cate_name, cate_type):
 
 # google plus share
 'https://plusone.google.com/u/0/_/+1/fastbutton?url=https%3A%2F%2Fmarket.android.com%2Fdetails%3Fid%3Dcom.rovio.angrybirds'
+
+
+    #review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-user-reviews-list'})
+    #review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-user-reviews-page num-pagination-page'})
+    #review_content_fa = tab_review.find_all(name='div', attrs={'class':'doc-reviews-container'})
+    #for review_content_f in review_content_fa:
+        #print review_content_f.prettify()
+    #    print '=========='
+    ############# how to get review all out? need to look at the javascript 
