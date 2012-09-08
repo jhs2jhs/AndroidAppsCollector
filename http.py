@@ -60,7 +60,7 @@ def use_httplib_http(url, method, url_body, conn, host, headers):
     try:
         if conn == None:
             print conn, type(conn)
-            conn = get_conn_http()
+            conn = get_conn_http(host)
         conn.request(method=method, url=url, body=url_body, headers=headers)
         status, body = use_httplib_http_resp(conn, headers)
         return status, body, conn
@@ -75,7 +75,7 @@ def use_httplib_redirect(host, url, headers):
     try:
         conn_c = httplib.HTTPConnection(host=host) # leave port as default
         conn_c.request(method="GET", url=url, headers=headers)
-        status, body = use_httplib_http_resp(conn, headers)
+        status, body = use_httplib_http_resp(conn_c, headers)
         conn_c.close()
         return status, body
     except Exception as e:
@@ -130,7 +130,7 @@ def use_httplib_https_redirect(host, url, headers):
     try:
         conn_c = httplib.HTTPSConnection(host=host) # leave port as default?
         conn_c.request(method='GET', url=url, headers=headers)
-        status, body = use_httplib_https_resp(conn, headers)
+        status, body = use_httplib_https_resp(conn_c, headers)
         conn_c.close()
         return status, body
     except Exception as e:

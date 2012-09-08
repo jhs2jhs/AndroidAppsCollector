@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS share (
   google_plus_href TEXT,
   google_plus_figure TEXT,
   read_status TEXT DEFAULT 0,
-  google_create_date TEXT, 
-  google_update_date TEXT, 
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT, 
   UNIQUE (app_id, google_plus_href)
 );
 CREATE TABLE IF NOT EXISTS awards (
@@ -75,9 +75,13 @@ CREATE TABLE IF NOT EXISTS videos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   app_id TEXT NOT NULL,
   video TEXT NOT NULL, 
-  watched TEXT DEFAULT -1, 
-  watched_create_date TEXT, 
-  watched_update_date TEXT, 
+  read_status TEXT DEFAULT 0,
+  view_total TEXT DEFAULT -1,
+  view_likes TEXT DEFAULT -1,
+  view_dislikes TEXT DEFAULT -1,
+  comments TEXT DEFAULT -1,
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT, 
   UNIQUE (app_id, video)
 );
 CREATE TABLE IF NOT EXISTS review (
@@ -90,8 +94,8 @@ CREATE TABLE IF NOT EXISTS review (
   title TEXT,
   comment TEXT, 
   review_star TEXT,
-  review_create_date TEXT, 
-  review_update_date TEXT
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT
 );
 CREATE TABLE IF NOT EXISTS review_read (
   app_id TEXT NOT NULL UNIQUE,
@@ -196,10 +200,29 @@ sql_app_rating_update = '''
 UPDATE app SET rating_0=?, rating_1=?, rating_2=?, rating_3=?, rating_4=?, rating_5=? WHERE app_id=?
 '''
 sql_video_get = '''
-SELECT app_id, video, watched FROM videos WHERE watched = -1
+SELECT app_id, video, view_total FROM videos WHERE read_status = 0
 '''
-
-
+sql_video_update = '''
+UPDATE videos SET view_total=?, view_likes=?, view_dislikes=?, comments=?, scrape_create_date=?, read_status=? WHERE app_id=? AND video=?
+'''
+sql_app_read_update = '''
+UPDATE app SET read_status=?, scrape_create_date=? WHERE app_id=?
+'''
+sql_review_app_get = '''
+SELECT app_id FROM app 
+'''
+sql_review_read_insert = '''
+INSERT OR IGNORE INTO review_read (app_id) VALUES (?)
+'''
+sql_review_read_get = '''
+SELECT app_id, pageNum, review_type, review_sort_order FROM review_read WHERE read_status = 0
+'''
+sql_review_insert = '''
+INSERT OR IGNORE INTO review (review_id, app_id, reviewer, date, device, version, title, comment, review_star, scrape_create_date) VALUES (?,?,?,?,?,?,?,?,?,?)
+'''
+sql_review_read_update = '''
+UPDATE review_read SET pageNum=? WHERE app_id=?
+'''
 
 if __name__ == '__main__':
     db_init()
