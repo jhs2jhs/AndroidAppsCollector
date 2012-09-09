@@ -59,8 +59,10 @@ def categories_read_main():
                 cate_i = cate_i + 24
 
 def category_read_main():
+    finish = True
     rows = db.db_get_g(db.sql_cate_read_get, ())
     for row in rows:
+        finish = False
         cate_name = row[0]
         cate_path = row[1]
         cate_param = row[2]
@@ -70,6 +72,7 @@ def category_read_main():
             db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_param, cate_type, ))
         except Exception as e:
             err.except_p(e)
+    return finish
             
 
 def category_read(cate_path, cate_name, cate_type, cate_start):
@@ -104,10 +107,13 @@ def category_read(cate_path, cate_name, cate_type, cate_start):
     
 
 def app_read_main():
+    finish = True
     rows = db.db_get_g(db.sql_app_read_get, ())
     for row in rows:
+        finish = False
         app_id = row[0]
         app_read(app_id)
+    return finish 
 
 def app_read(app_id):
     url = '/%s/details?id=%s'%(android_root, app_id)

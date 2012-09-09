@@ -5,15 +5,20 @@ import youtube
 
 def google_play_main():
     db.db_init()
-    try:
-        google_play.categories_read_main()
-        google_play.category_read_main()
-    except Exception as e:
-        err.except_p(e)
-    try:
-        google_play.app_read_main()
-    except Exception as e:
-        err.except_p(e)
+    finish = False
+    while finish == False:
+        try:
+            google_play.categories_read_main()
+            finish = google_play.category_read_main()
+        except Exception as e:
+            err.except_p(e)
+    finish = False
+    while finish == False:
+        try:
+            finish = google_play.app_read_main()
+        except Exception as e:
+            err.except_p(e)
+    
 
 def app_read_main_test():
     try:
