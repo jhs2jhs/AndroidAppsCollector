@@ -31,7 +31,6 @@ def android_https_post(url, url_body):
 
 ####################
 def categories_read_main():
-    global android_conn
     url = '/%s/%s'%(android_root, android_categories)
     print '** categories main %s **'%(url)
     status, body = android_https_get(url)

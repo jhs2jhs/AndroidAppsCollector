@@ -1,6 +1,32 @@
 import sqlite3
 
 sql_init = '''
+CREATE TABLE IF NOT EXISTS category_android_zoom (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cate_group TEXT NOT NULL, 
+  cate_name TEXT NOT NULL,
+  cate_path TEXT NOT NULL UNIQUE,
+  cate_create_date TEXT,
+  cate_update_date TEXT,
+  UNIQUE (cate_group, cate_name, cate_path)
+);
+CREATE TABLE IF NOT EXISTS category_android_zoom_read (
+  cate_name TEXT NOT NULL, 
+  cate_path TEXT NOT NULL,
+  cate_param TEXT NOT NULL DEFAULT 0, -- last successful 
+  cate_type TEXT,
+  read_status TEXT NOT NULL DEFAULT 0,
+  UNIQUE (cate_path)
+);
+CREATE TABLE IF NOT EXISTS app_android_zoom_read (
+  app_name TEXT NOT NULL, 
+  app_path TEXT NOT NULL,
+  app_id TEXT,
+  read_status TEXT NOT NULL DEFAULT 0,
+  UNIQUE (app_path)
+);
+
+---------------
 CREATE TABLE IF NOT EXISTS category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cate_group TEXT NOT NULL, 
@@ -114,6 +140,7 @@ CREATE TABLE IF NOT EXISTS permission (
 '''
 
 db_path = './android.db'
+#db_path = './test.db'
 def get_db():
     db = sqlite3.connect(db_path)
     return db
@@ -223,6 +250,30 @@ INSERT OR IGNORE INTO review (review_id, app_id, reviewer, date, device, version
 sql_review_read_update = '''
 UPDATE review_read SET pageNum=? WHERE app_id=?
 '''
+
+####### zoom 
+sql_zoom_cate_insert = '''
+INSERT OR IGNORE INTO category_android_zoom (cate_group, cate_name, cate_path, cate_create_date) VALUES (?,?,?,?)
+'''
+sql_zoom_cate_read_insert = '''
+INSERT OR IGNORE INTO category_android_zoom_read (cate_name, cate_path, cate_param) VALUES (?,?,?)
+'''
+sql_zoom_cate_read_update = '''
+UPDATE category_android_zoom_read SET read_status = 1 WHERE cate_path=? 
+'''
+sql_zoom_cate_read_param_update = '''
+UPDATE category_android_zoom_read SET cate_param = ? WHERE cate_path=? 
+'''
+sql_zoom_cate_read_get = '''
+SELECT cate_name, cate_path, cate_param FROM category_android_zoom_read WHERE read_status = 0
+'''
+sql_zoom_app_insert = '''
+INSERT OR IGNORE INTO app_android_zoom_read (app_name, app_path) VALUES (?,?)
+'''
+sql_zoom_app_update = '''
+UPDATE app_android_zoom_read SET app_id = ?, read_status = 1 WHERE app_path = ?
+'''
+
 
 if __name__ == '__main__':
     db_init()

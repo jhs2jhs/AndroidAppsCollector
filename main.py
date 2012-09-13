@@ -25,7 +25,7 @@ def google_play_main():
     finish = False
     while finish == False:
         try:
-            finish = youtube_read_main()
+            finish = youtube.video_read_main()
         except Exception as e:
             err.except_p(e)
     
