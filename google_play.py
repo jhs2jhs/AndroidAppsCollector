@@ -9,6 +9,7 @@ import http
 import db
 import err
 import time
+import util
 
 android_host_https = 'play.google.com'
 android_conn_https = http.get_conn_https(android_host_https)
@@ -17,10 +18,14 @@ android_root = 'store/apps'
 android_categories = 'category/APPLICATION'
 def android_https_get(url):
     global android_conn_https
+    if android_conn_https == None:
+        android_conn_https = http.get_conn_https(android_host_https)
     status, body, android_conn_https = http.use_httplib_https(url, 'GET', '', android_conn_https, android_host_https, android_headers_https)
     return status, body
 def android_https_post(url, url_body):
     global android_conn_https
+    if android_conn_https == None:
+        android_conn_https = http.get_conn_https(android_host_https)
     status, body, android_conn_https = http.use_httplib_https(url, 'POST', url_body, android_conn_https, android_host_https, android_headers_https)
     return status, body
 
@@ -72,6 +77,7 @@ def category_read_main():
             db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_param, cate_type, ))
         except Exception as e:
             err.except_p(e)
+        util.sleep()
     return finish
             
 
@@ -79,8 +85,11 @@ def category_read(cate_path, cate_name, cate_type, cate_start):
     url = '%s/collection/%s?start=%s&num=24'%(cate_path, cate_type, cate_start)
     print '** category %s **'%(url)
     status, body = android_https_get(url)
+    if status == 404: # not all category would have more 480 items. 
+        print '==: %s '%(str(status))
+        return 
     if status != 200:
-        raise Exception('app category https connection error')
+        raise Exception('app category https connection error: %s'%(str(status)))
     soup = BeautifulSoup(body)
     divs = soup.find_all(name='div', attrs={'class':'snippet snippet-medium'})
     for div in divs:
@@ -106,6 +115,8 @@ def category_read(cate_path, cate_name, cate_type, cate_start):
         db.db_execute_g(db.sql_app_insert_with_rank, (app_id, rank))
     
 
+
+#########################
 def app_read_main():
     finish = True
     rows = db.db_get_g(db.sql_app_read_get, ())
@@ -121,6 +132,10 @@ def app_read(app_id):
     try:
         status, body = android_https_get(url)
         #print status, body
+        if status == 404:
+            print '== 404'
+            db.db_execute_g(db.sql_app_read_update, (1, str(datetime.now()), app_id))
+            return 
         if status != 200:
             raise Exception('app read https connection error: %s'%(str(status)))
         soup = BeautifulSoup(body)
@@ -129,6 +144,7 @@ def app_read(app_id):
         app_read_tab_review(app_id, soup)
         app_read_tab_permission(app_id, soup)
         db.db_execute_g(db.sql_app_read_update, (1, str(datetime.now()), app_id))
+        util.sleep()
     except Exception as e:
         err.except_p(e)
 
@@ -294,7 +310,8 @@ def app_read_tab_review(app_id, soup): ## needs to work out
     for review_head_f in review_head_fa:
         user_rating_fa = review_head_f.find_all(name='div', attrs={'class':'user-ratings'})
         if len(user_rating_fa) <= 0:
-            raise Exception('app tab review user rating len <= 0')
+            return 
+            #raise Exception('app tab review user rating len <= 0')
         user_rating_fa = user_rating_fa[0]
         rating_tr_fa = user_rating_fa.find_all(name='span', attrs={'class':'histogram-label'})
         for rating_tr_f in rating_tr_fa:

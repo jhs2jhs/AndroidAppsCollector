@@ -2,20 +2,30 @@ import db
 import err
 import google_play
 import youtube
+import util
 
 def google_play_main():
     db.db_init()
+    '''
     finish = False
     while finish == False:
         try:
             google_play.categories_read_main()
             finish = google_play.category_read_main()
+            util.sleep()
+        except Exception as e:
+            err.except_p(e)
+    '''
+    finish = False
+    while finish == False:
+        try:
+            finish = google_play.app_read_main()
         except Exception as e:
             err.except_p(e)
     finish = False
     while finish == False:
         try:
-            finish = google_play.app_read_main()
+            finish = youtube_read_main()
         except Exception as e:
             err.except_p(e)
     
@@ -37,8 +47,8 @@ def app_read_test():
         
 
 if __name__ == '__main__':
-    #google_play_main()
+    google_play_main()
     #app_read_main_test()
-    app_read_test()
+    #app_read_test()
     #google_play.post_test()
     #google_play.post_t()

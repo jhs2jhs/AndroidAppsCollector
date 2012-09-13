@@ -4,6 +4,7 @@ import urllib
 import err
 from bs4 import BeautifulSoup
 from datetime import datetime
+import util
 
 youtube_host_http = 'www.youtube.com'
 youtube_conn_http = http.get_conn_http(youtube_host_http)
@@ -11,18 +12,24 @@ youtube_headers_http = {"Content-type": "application/x-www-form-urlencoded", "Ac
 youtube_root = 'watch'
 def youtube_http_get(url):
     global youtube_conn_http
+    if youtube_conn_http == None:
+        youtube_conn_http = http.get_conn_http(youtube_host_http)
     status, body, youtube_conn_http = http.use_httplib_http(url, 'GET', '', youtube_conn_http, youtube_host_http, youtube_headers_http)
     return status, body
 def youtube_http_post(url, url_body):
     global youtube_conn_http
+    if youtube_conn_http == None:
+        youtube_conn_http = http.get_conn_http(youtube_host_http)
     status, body, youtube_conn_http = http.use_httplib_http(url, 'POST', url_body, youtube_conn_http, youtube_host_http, youtube_headers_http)
     return status, body
 
 
 ################
 def video_read_main():
+    finish = True
     rows = db.db_get_g(db.sql_video_get, ())
     for row in rows:
+        finish = False
         app_id = row[0]
         video_href = row[1]
         view_total = row[2]
@@ -32,6 +39,8 @@ def video_read_main():
             video_read(video_id, app_id, video_href)
         except Exception as e:
             err.except_p(e)
+        util.sleep()
+    return finish
 
 def video_read(video_id, app_id, video_href):
     view_total = ''
