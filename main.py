@@ -28,6 +28,14 @@ def google_play_main():
             finish = youtube.video_read_main()
         except Exception as e:
             err.except_p(e)
+    finish = False
+    google_play.review_read_main_init()
+    while finish == False:
+        try:
+            finish = google_play.review_read_main()
+        except Exception as e:
+            err.except_p(e)
+            
     
 
 def app_read_main_test():

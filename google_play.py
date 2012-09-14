@@ -354,25 +354,23 @@ def app_read_tab_permission(app_id, soup):
 
 
 ######
-def review_read_main():
+def review_read_main_init():
     rows = db.db_get_g(db.sql_review_app_get, ())
     for row in rows:
         app_id = row[0]
         db.db_execute_g(db.sql_review_read_insert, (app_id,))
+        
+def review_read_main():
     rows = db.db_get_g(db.sql_review_read_get, ())
     for row in rows:
         app_id = row[0]
         page_num = row[1]
-        page_num = 490
+        #page_num = 490
         review_type = row[2]
         review_sort_order = row[3]
         status = 200
         while status == 200:
-            try:
-                status, page_num = review_read_loop(app_id, page_num, review_type, review_sort_order)
-            except Exception as e:
-                err.except_p(e)
-                break
+            status, page_num = review_read_loop(app_id, page_num, review_type, review_sort_order)
             time.sleep(10)
         #break
 
@@ -387,9 +385,14 @@ def review_read_loop(app_id, page_num, review_type, review_sort_order):
     url = '/store/getreviews'
     print param, url
     status, body = android_https_post(url, param)
-    print status
+    if status == 404:
+        print '==: 404'
+        db.db_execute_g(db.sql_review_read_status_update, (app_id, ))
+        return status, page_num
     if status != 200:
-        raise Exception('app getreview ajax status != 200')
+        print 'app review https connection error: %s'%(str(status))
+        return status, page_num
+        #raise Exception('app getreview ajax status != 200')
     body = body.lstrip(")]}'").strip()
     try:
         review_read(app_id, body)

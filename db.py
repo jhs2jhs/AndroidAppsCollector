@@ -232,6 +232,9 @@ SELECT app_id, video, view_total FROM videos WHERE read_status = 0
 sql_video_update = '''
 UPDATE videos SET view_total=?, view_likes=?, view_dislikes=?, comments=?, scrape_create_date=?, read_status=? WHERE app_id=? AND video=?
 '''
+sql_video_update_404 = '''
+UPDATE videos SET scrape_create_date=?, read_status=? WHERE app_id=? AND video=?
+'''
 sql_app_read_update = '''
 UPDATE app SET read_status=?, scrape_create_date=? WHERE app_id=?
 '''
@@ -249,6 +252,9 @@ INSERT OR IGNORE INTO review (review_id, app_id, reviewer, date, device, version
 '''
 sql_review_read_update = '''
 UPDATE review_read SET pageNum=? WHERE app_id=?
+'''
+sql_review_read_status_update = '''
+UPDATE review_read SET read_status = 1 WHERE app_id=?
 '''
 
 ####### zoom 
@@ -272,6 +278,9 @@ INSERT OR IGNORE INTO app_android_zoom_read (app_name, app_path) VALUES (?,?)
 '''
 sql_zoom_app_update = '''
 UPDATE app_android_zoom_read SET app_id = ?, read_status = 1 WHERE app_path = ?
+'''
+sql_zoom_app_get = '''
+SELECT app_name, app_path, app_id, read_status FROM app_android_zoom_read WHERE read_status = 0
 '''
 
 

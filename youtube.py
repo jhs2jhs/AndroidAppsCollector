@@ -54,6 +54,9 @@ def video_read(video_id, app_id, video_href):
     url = '/%s?%s'%(youtube_root, url_body)
     print '** youtube : %s **'%(url)
     status, body = youtube_http_get(url)
+    if status == 404:
+        db.db_execute_g(db.sql_video_update_404, (str(datetime.now()), 1, app_id, video_href))
+        return 
     if status != 200:
         raise Exception('youtube http connection status:%s'%(str(status)))
     soup = BeautifulSoup(body)
