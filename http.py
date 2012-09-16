@@ -6,7 +6,7 @@ import urlparse
 import urllib
 
 strict = 1
-timeout = 10
+timeout = 60
 source_address = None
 '''
 headers = {

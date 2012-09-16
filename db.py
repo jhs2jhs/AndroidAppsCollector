@@ -1,6 +1,47 @@
 import sqlite3
 
 sql_init = '''
+CREATE TABLE IF NOT EXISTS lib_lang (
+  lang_href TEXT NOT NULL UNIQUE, 
+  lang_title TEXT NOT NULL,
+  read_status TEXT NOT NULL DEFAULT 0,
+  lang_create_date TEXT,
+  lang_update_date TEXT
+);
+CREATE TABLE IF NOT EXISTS lib_lang_cate (
+  lang_href TEXT NOT NULL,
+  cate_path TEXT NOT NULL,
+  cate_title TEXT,
+  cate_param TEXT NOT NULL DEFAULT 0, 
+  cate_param_max TEXT NOT NULL DEFAULT 0,
+  read_status TEXT NOT NULL DEFAULT 0, 
+  cate_create_date TEXT,
+  cate_update_date TEXT,
+  UNIQUE (lang_href, cate_path)
+);
+CREATE TABLE IF NOT EXISTS lib_lang_cate_read (
+  lang_href TEXT NOT NULL,
+  cate_path TEXT NOT NULL,
+  cate_param TEXT NOT NULL,
+  read_status TEXT NOT NULL DEFAULT 0,
+  cate_create_date TEXT,
+  cate_update_date TEXT,
+  UNIQUE (lang_href, cate_path, cate_param)
+);
+CREATE TABLE IF NOT EXISTS lib_lang_cate_link_read (
+  lang_href TEXT NOT NULL,
+  cate_path TEXT NOT NULL,
+  cate_param TEXT NOT NULL,
+  link_href TEXT NOT NULL,
+  link_name TEXT NOT NULL,
+  link_id TEXT,
+  app_id TEXT,
+  read_status TEXT NOT NULL DEFAULT 0,
+  cate_create_date TEXT,
+  cate_update_date TEXT,
+  UNIQUE (lang_href, cate_path, cate_param, link_href)
+);
+--------------
 CREATE TABLE IF NOT EXISTS category_android_zoom (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cate_group TEXT NOT NULL, 
@@ -139,8 +180,8 @@ CREATE TABLE IF NOT EXISTS permission (
 );
 '''
 
-db_path = './android.db'
-#db_path = './test.db'
+#db_path = './android.db'
+db_path = './test.db'
 def get_db():
     db = sqlite3.connect(db_path)
     return db
@@ -283,6 +324,44 @@ sql_zoom_app_get = '''
 SELECT app_name, app_path, app_id, read_status FROM app_android_zoom_read WHERE read_status = 0
 '''
 
+
+#################
+sql_lib_lang_insert = '''
+INSERT OR IGNORE INTO lib_lang (lang_href, lang_title, lang_create_date) VALUES (?,?,?)
+'''
+sql_lib_lang_get = '''
+SELECT lang_href, lang_title FROM lib_lang WHERE read_status = 0
+'''
+sql_lib_lang_update = '''
+UPDATE lib_lang SET read_status = 1 WHERE lang_href = ?
+'''
+sql_lib_lang_cate_insert = '''
+INSERT OR IGNORE INTO lib_lang_cate (lang_href, cate_path, cate_title, cate_create_date) VALUES (?,?,?,?)
+'''
+sql_lib_lang_cate_get = '''
+SELECT lang_href, cate_path, cate_title, cate_param_max FROM lib_lang_cate WHERE read_status = 0
+'''
+sql_lib_lang_cate_read_insert = '''
+INSERT OR IGNORE INTO lib_lang_cate_read (lang_href, cate_path, cate_param, cate_create_date) VALUES (?,?,?,?)
+'''
+sql_lib_lang_cate_update = '''
+UPDATE lib_lang_cate SET cate_param_max = ?, read_status = 1 WHERE lang_href = ? AND cate_path = ?
+'''
+sql_lib_lang_cate_read_get = '''
+SELECT lang_href, cate_path, cate_param FROM lib_lang_cate_read WHERE read_status = 0 ORDER BY lang_href, cate_path, cate_param
+'''
+sql_lib_lang_cate_read_update = '''
+UPDATE lib_lang_cate_read SET read_status = 1 WHERE lang_href = ? AND cate_path = ? AND cate_param = ?
+'''
+sql_lib_lang_cate_link_read_insert = '''
+INSERT OR IGNORE INTO lib_lang_cate_link_read (lang_href, cate_path, cate_param, link_href, link_name, link_id) VALUES (?,?,?,?,?,?)
+'''
+sql_lib_lang_cate_link_read_get = '''
+SELECT lang_href, cate_path, cate_param, link_href FROM lib_lang_cate_link_read WHERE read_status = 0
+'''
+sql_lib_lang_cate_link_read_update = '''
+UPDATE lib_lang_cate_link_read SET app_id = ?, read_status = 1 WHERE lang_href=? AND cate_path=? AND cate_param=?
+'''
 
 if __name__ == '__main__':
     db_init()
