@@ -143,6 +143,27 @@ def app_read_main():
     
     
 
+def db_merge(db1, db2):
+    conn_db1 = sqlite3.connect(db1)
+    conn_db2 = sqlite3.connect(db2)
+    c1 = conn_db1.cursor()
+    c2 = conn_db2.cursor()
+    sql1 = 'SELECT cate_group, cate_name, cate_path, cate_create_date, cate_update_date FROM category_android_zoom'
+    c1.execute(sql1, (,))
+    for row in c1.fetchall():
+        cate_group = row[0]
+        cate_name = row[1]
+        cate_path = row[2]
+        cate_create_date = row[3]
+        cate_update_date = row[4]
+        sql2 = 'INSERT OR IGNORE INTO category_android_zoom (cate_group, cate_name, cate_path, cate_create_date, cate_update) VALUES (?,?,?,?,?)'
+        c2.execute(sql2, (cate_group, cate_name, cate_path, cate_create_date, cate_update_date))
+        conn_db2.commit()
+    sql1 = 'SELECT cate_name, cate_path, cate_param, cate_type, read_status '
+    c1.close()
+
+
+
 if __name__  == '__main__':
     db.db_init()
     try:

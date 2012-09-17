@@ -168,7 +168,7 @@ def cate_read_main():
             lib_conn_http = http.get_conn_http(lib_host_http)
         try:
             cate_read(lang_href, cate_path, cate_param)
-            #util.sleep()
+            util.sleep_i(1)
         except Exception as e:
             err.except_p(e)
         
@@ -206,7 +206,7 @@ def cate_link_read_main():
             lib_conn_http = http.get_conn_http(lib_host_http)
         try:
             cate_link_read(link_href, lang_href, cate_path, cate_param)
-            #util.sleep()
+            util.sleep_i(1)
         except Exception as e:
             err.except_p(e)
         
@@ -227,7 +227,9 @@ def cate_link_read(link_href, lang_href, cate_path, cate_param):
             db.db_execute_g(db.sql_app_insert, (app_id,))
             db.db_execute_g(db.sql_lib_lang_cate_link_read_update, (app_id, lang_href, cate_path, cate_param))
             print app_id
-        
+
+
+
     
         
 if __name__  == '__main__':

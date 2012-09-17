@@ -6,7 +6,8 @@ import urlparse
 import urllib
 from datetime import datetime
 import http
-import db
+import db_play
+import db_sql
 import err
 import time
 import util
@@ -55,16 +56,16 @@ def categories_read_main():
                 raise Exception('app home nav li a href has not href')
             cate_path = urlparse.urlparse(a['href']).path.strip()
             cate_name = a.text.strip()
-            db.db_execute_g(db.sql_cate_insert, (cate_group_name, cate_name, cate_path, str(datetime.now())))
+            db_play.db_execute_g(db_sql.sql_cate_insert, (cate_group_name, cate_name, cate_path, str(datetime.now())))
             cate_i = 0
             while cate_i < 504:
-                db.db_execute_g(db.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_free'))
-                db.db_execute_g(db.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_paid'))
+                db_play.db_execute_g(db_sql.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_free'))
+                db_play.db_execute_g(db_sql.sql_cate_read_insert, (cate_name, cate_path, cate_i, 'topselling_paid'))
                 cate_i = cate_i + 24
 
 def category_read_main():
     finish = True
-    rows = db.db_get_g(db.sql_cate_read_get, ())
+    rows = db_play.db_get_g(db_sql.sql_cate_read_get, ())
     for row in rows:
         finish = False
         cate_name = row[0]
@@ -73,7 +74,7 @@ def category_read_main():
         cate_type = row[3]
         try:
             category_read(cate_path, cate_name, cate_type, cate_param)
-            db.db_execute_g(db.sql_cate_read_update, (cate_name, cate_path, cate_param, cate_type, ))
+            db_play.db_execute_g(db_sql.sql_cate_read_update, (cate_name, cate_path, cate_param, cate_type, ))
         except Exception as e:
             err.except_p(e)
         util.sleep()
@@ -111,14 +112,14 @@ def category_read(cate_path, cate_name, cate_type, cate_start):
         if href_id == None:
             raise Exception('category div a href urlparse wrong')
         app_id = href_id.strip()
-        db.db_execute_g(db.sql_app_insert_with_rank, (app_id, rank))
+        db_play.db_execute_g(db_sql.sql_app_insert_with_rank, (app_id, rank))
     
 
 
 #########################
 def app_read_main():
     finish = True
-    rows = db.db_get_g(db.sql_app_read_get, ())
+    rows = db_play.db_get_g(db_sql.sql_app_read_get, ())
     for row in rows:
         finish = False
         app_id = row[0]
@@ -133,7 +134,7 @@ def app_read(app_id):
         #print status, body
         if status == 404:
             print '== 404'
-            db.db_execute_g(db.sql_app_read_update, (1, str(datetime.now()), app_id))
+            db_play.db_execute_g(db_sql.sql_app_read_update, (1, str(datetime.now()), app_id))
             return 
         if status != 200:
             raise Exception('app read https connection error: %s'%(str(status)))
@@ -142,7 +143,7 @@ def app_read(app_id):
         app_read_tab_overview(app_id, soup)
         app_read_tab_review(app_id, soup)
         app_read_tab_permission(app_id, soup)
-        db.db_execute_g(db.sql_app_read_update, (1, str(datetime.now()), app_id))
+        db_play.db_execute_g(db_sql.sql_app_read_update, (1, str(datetime.now()), app_id))
         util.sleep()
     except Exception as e:
         err.except_p(e)
@@ -174,7 +175,7 @@ def app_read_banner(app_id, soup):
     banner_annotation_fa = soup.find_all(name='div', attrs={'class':'badges-badge-title goog-inline-block'})
     for banner_annotation in banner_annotation_fa:
         banner_annotation_text = banner_annotation.text.strip()
-        db.db_execute_g(db.sql_app_awards_insert, (app_id, banner_annotation_text))
+        db_play.db_execute_g(db_sql.sql_app_awards_insert, (app_id, banner_annotation_text))
     rating_price_fa = soup.find_all(name='td', attrs={'class':'doc-details-ratings-price'})
     if len(rating_price_fa) == 1:
         rating_fa = rating_price_fa[0].find_all(name='div', attrs={'class':'ratings goog-inline-block'})
@@ -193,7 +194,7 @@ def app_read_banner(app_id, soup):
         for price_f in price_fa:
             price = price_f.text
             price = price.upper().replace('BUY', '').strip()
-    db.db_execute_g(db.sql_app_banner_update, (banner_title, banner_icon_src, banner_developer_name, banner_developer_href, rating_figure, raters, price, app_id))
+    db_play.db_execute_g(db_sql.sql_app_banner_update, (banner_title, banner_icon_src, banner_developer_name, banner_developer_href, rating_figure, raters, price, app_id))
         
 
 def app_read_tab_overview(app_id, soup):
@@ -217,7 +218,7 @@ def app_read_metadata(app_id, soup):
         for meta_google_plus_f in meta_google_plus_fa:
             if len(meta_google_plus_f.contents)>0 and meta_google_plus_f.contents[0].has_key('href'):
                 meta_google_plus_href = meta_google_plus_f.contents[0]['href'].strip()
-                db.db_execute_g(db.sql_app_google_plus_insert, (app_id, meta_google_plus_href))
+                db_play.db_execute_g(db_sql.sql_app_google_plus_insert, (app_id, meta_google_plus_href))
         meta_update_fa = metadata_f.find_all(name='dt', text='Updated:')
         if len(meta_update_fa) > 0 and meta_update_fa[0].next_sibling != None:
             meta_update_f = meta_update_fa[0].next_sibling
@@ -248,7 +249,7 @@ def app_read_metadata(app_id, soup):
         if len(meta_rating_fa) > 0 and meta_rating_fa[0].next_sibling != None:
             meta_rating_f = meta_rating_fa[0].next_sibling
             meta_rating = meta_rating_f.text.strip()
-    db.db_execute_g(db.sql_app_metadata_update, (meta_update, meta_current, meta_require, meta_install, meta_size, meta_category, meta_rating, app_id))
+    db_play.db_execute_g(db_sql.sql_app_metadata_update, (meta_update, meta_current, meta_require, meta_install, meta_size, meta_category, meta_rating, app_id))
     
 
 def app_read_overview(app_id, soup):
@@ -274,7 +275,7 @@ def app_read_overview(app_id, soup):
         for developer_privacy_f in developer_privacy_fa:
             if developer_privacy_f.has_key('href'):
                 developer_privacy = developer_privacy_f['href'].strip()
-    db.db_execute_g(db.sql_app_overview_update, (desc, developer_website, developer_email, developer_privacy, app_id))
+    db_play.db_execute_g(db_sql.sql_app_overview_update, (desc, developer_website, developer_email, developer_privacy, app_id))
 
 def app_read_screenshot(app_id, soup):
     screenshots_fa = soup.find_all(name='div', attrs={'class':'doc-overview-screenshots'})
@@ -283,7 +284,7 @@ def app_read_screenshot(app_id, soup):
         for screenshot_f in screenshot_fa:
             if screenshot_f.has_key('src'):
                 screenshot = screenshot_f['src'].strip()
-                db.db_execute_g(db.sql_app_screenshot_insert, (app_id, screenshot))
+                db_play.db_execute_g(db_sql.sql_app_screenshot_insert, (app_id, screenshot))
 
 def app_read_video(app_id, soup):
     videos_fa = soup.find_all(name='div', attrs={'class':'doc-overview-videos'})
@@ -292,7 +293,7 @@ def app_read_video(app_id, soup):
         for video_f in video_fa:
             if video_f.has_key('value'):
                 video = video_f['value'].strip()
-                db.db_execute_g(db.sql_app_video_insert, (app_id, video))
+                db_play.db_execute_g(db_sql.sql_app_video_insert, (app_id, video))
 
 def app_read_tab_review(app_id, soup): ## needs to work out
     rating_0 = ''
@@ -332,7 +333,7 @@ def app_read_tab_review(app_id, soup): ## needs to work out
                 rating_4 = rating_figure
             if rating_star == '5':
                 rating_5 = rating_figure
-    db.db_execute_g(db.sql_app_rating_update, (rating_0, rating_1, rating_2, rating_3, rating_4, rating_5, app_id))
+    db_play.db_execute_g(db_sql.sql_app_rating_update, (rating_0, rating_1, rating_2, rating_3, rating_4, rating_5, app_id))
 
 def app_read_tab_permission(app_id, soup):
     perm_group_title = ''
@@ -349,19 +350,19 @@ def app_read_tab_permission(app_id, soup):
                     perm_group_title = pc.text.strip()
                 if 'doc-permission-description' in pcc:
                     perm_each_desc = pc.text.strip()
-                    db.db_execute_g(db.sql_app_perm_insert, (app_id, perm_group_title, perm_each_desc))
+                    db_play.db_execute_g(db_sql.sql_app_perm_insert, (app_id, perm_group_title, perm_each_desc))
 
 
 
 ######
 def review_read_main_init():
-    rows = db.db_get_g(db.sql_review_app_get, ())
+    rows = db_play.db_get_g(db_sql.sql_review_app_get, ())
     for row in rows:
         app_id = row[0]
-        db.db_execute_g(db.sql_review_read_insert, (app_id,))
+        db_play.db_execute_g(db_sql.sql_review_read_insert, (app_id,))
         
 def review_read_main():
-    rows = db.db_get_g(db.sql_review_read_get, ())
+    rows = db_play.db_get_g(db_sql.sql_review_read_get, ())
     for row in rows:
         app_id = row[0]
         page_num = row[1]
@@ -387,7 +388,7 @@ def review_read_loop(app_id, page_num, review_type, review_sort_order):
     status, body = android_https_post(url, param)
     if status == 404:
         print '==: 404'
-        db.db_execute_g(db.sql_review_read_status_update, (app_id, ))
+        db_play.db_execute_g(db_sql.sql_review_read_status_update, (app_id, ))
         return status, page_num
     if status != 200:
         print 'app review https connection error: %s'%(str(status))
@@ -396,7 +397,7 @@ def review_read_loop(app_id, page_num, review_type, review_sort_order):
     body = body.lstrip(")]}'").strip()
     try:
         review_read(app_id, body)
-        db.db_execute_g(db.sql_review_read_update, (page_num, app_id, ))
+        db_play.db_execute_g(db_sql.sql_review_read_update, (page_num, app_id, ))
         page_num = int(page_num) + 1
     except Exception as e:
         err.except_p(e)
@@ -458,7 +459,7 @@ def review_read(app_id, body):
             for text_f in text_fa:
                 review_text = review_text + text_f.text.strip() + ' '
             if review_id != '':
-                db.db_execute_g(db.sql_review_insert, (review_id, app_id, review_author, review_date, review_device, review_version, review_title, review_text, review_rating, str(datetime.now()),))
+                db_play.db_execute_g(db_sql.sql_review_insert, (review_id, app_id, review_author, review_date, review_device, review_version, review_title, review_text, review_rating, str(datetime.now()),))
             
     
 
