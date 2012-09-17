@@ -1,7 +1,7 @@
 import sqlite3
 import db_sql
 
-db_path = './db_zoom.db'
+db_path = './db_app.db'
 
 def get_db():
     db = sqlite3.connect(db_path)
@@ -40,4 +40,22 @@ def db_get_g(sql, params):
     c.close()
     return r
 
+
+
+def db_merge(db1, db2):
+    print '* merge from %s to %s *'%(db1, db2)
+    conn_db1 = sqlite3.connect(db1)
+    conn_db2 = sqlite3.connect(db2)
+    c1 = conn_db1.cursor()
+    c2 = conn_db2.cursor()
+    sql1 = '''SELECT app_id, rank FROM app'''
+    c1.execute(sql1, ())
+    for row in c1.fetchall():
+        app_id = row[0]
+        rank = row[1]
+        sql2 = db_sql.sql_app_insert_with_rank
+        c2.execute(sql2, (app_id, rank, ))
+        conn_db2.commit()
+    c1.close()
+    c2.close()
 

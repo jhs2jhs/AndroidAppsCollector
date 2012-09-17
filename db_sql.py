@@ -1,6 +1,7 @@
 import sqlite3
 
 sql_init = '''
+------- androlib start
 CREATE TABLE IF NOT EXISTS lib_lang (
   lang_href TEXT NOT NULL UNIQUE, 
   lang_title TEXT NOT NULL,
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS lib_lang_cate_link_read (
   cate_update_date TEXT,
   UNIQUE (lang_href, cate_path, cate_param, link_href)
 );
---------------
+-------- androlib end
+-------- android_zoom start
 CREATE TABLE IF NOT EXISTS category_android_zoom (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cate_group TEXT NOT NULL, 
@@ -66,8 +68,8 @@ CREATE TABLE IF NOT EXISTS app_android_zoom_read (
   read_status TEXT NOT NULL DEFAULT 0,
   UNIQUE (app_path)
 );
-
----------------
+-------------- android_zoom end
+-------------- google_play start
 CREATE TABLE IF NOT EXISTS category (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cate_group TEXT NOT NULL, 
@@ -85,6 +87,8 @@ CREATE TABLE IF NOT EXISTS category_read (
   read_status TEXT NOT NULL DEFAULT 0,
   UNIQUE (cate_path, cate_param, cate_type)
 );
+--------------- google_play end
+
 CREATE TABLE IF NOT EXISTS app (
   app_id TEXT NOT NULL UNIQUE, 
   title TEXT,
@@ -120,7 +124,7 @@ CREATE TABLE IF NOT EXISTS share (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   app_id TEXT NOT NULL,
   google_plus_href TEXT,
-  google_plus_figure TEXT,
+  google_plus_figure TEXT, -- -1 means web is not available 
   read_status TEXT DEFAULT 0,
   scrape_create_date TEXT, 
   scrape_update_date TEXT, 
@@ -212,6 +216,12 @@ INSERT OR IGNORE INTO awards (app_id, award) VALUES (?,?)
 sql_app_google_plus_insert = '''
 INSERT OR IGNORE INTO share (app_id, google_plus_href) VALUES (?,?)
 '''
+sql_app_google_plus_get = '''
+SELECT app_id, google_plus_href FROM share WHERE read_status = 0
+'''
+sql_app_google_plus_update = '''
+UPDATE share SET read_status=1, google_plus_figure=?, scrape_create_date=? WHERE app_id=? AND google_plus_href=?
+'''
 sql_app_metadata_update = '''
 UPDATE app SET update_date=?, current_version=?, requires_android=?, installs=?, file_size=?, category=?, content_rating=? WHERE app_id = ?
 '''
@@ -260,6 +270,9 @@ UPDATE review_read SET pageNum=? WHERE app_id=?
 sql_review_read_status_update = '''
 UPDATE review_read SET read_status = 1 WHERE app_id=?
 '''
+
+#### google plus
+
 
 ####### zoom 
 sql_zoom_cate_insert = '''

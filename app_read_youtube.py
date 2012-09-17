@@ -1,4 +1,5 @@
-import db
+import db_sql
+import db_app
 import http
 import urllib
 import err
@@ -27,7 +28,7 @@ def youtube_http_post(url, url_body):
 ################
 def video_read_main():
     finish = True
-    rows = db.db_get_g(db.sql_video_get, ())
+    rows = db_app.db_get_g(db_sql.sql_video_get, ())
     for row in rows:
         finish = False
         app_id = row[0]
@@ -37,9 +38,9 @@ def video_read_main():
         video_id = video_href_d.split('?')[0].strip()
         try:
             video_read(video_id, app_id, video_href)
+            util.sleep()
         except Exception as e:
             err.except_p(e)
-        util.sleep()
     return finish
 
 def video_read(video_id, app_id, video_href):
@@ -55,7 +56,7 @@ def video_read(video_id, app_id, video_href):
     print '** youtube : %s **'%(url)
     status, body = youtube_http_get(url)
     if status == 404:
-        db.db_execute_g(db.sql_video_update_404, (str(datetime.now()), 1, app_id, video_href))
+        db_app.db_execute_g(db_sql.sql_video_update_404, (str(datetime.now()), 1, app_id, video_href))
         return 
     if status != 200:
         raise Exception('youtube http connection status:%s'%(str(status)))
@@ -73,6 +74,18 @@ def video_read(video_id, app_id, video_href):
     comments_fa = soup.find_all(name='span', attrs={'class':'comments-section-stat'})
     for comments_f in comments_fa:
         comments = comments_f.text.replace('(', '').replace(')', '').strip()
-    db.db_execute_g(db.sql_video_update, (view_total, view_likes, view_dislikes, comments, str(datetime.now()), 1, app_id, video_href))
+    db_app.db_execute_g(db_sql.sql_video_update, (view_total, view_likes, view_dislikes, comments, str(datetime.now()), 1, app_id, video_href))
     
+
+def main():
+    db_app.db_init()
+    finish = False
+    while finish == False:
+        try:
+            finish = video_read_main()
+        except Exception as e:
+            err.except_p(e)
                         
+
+if __name__ == '__main__':
+    main()

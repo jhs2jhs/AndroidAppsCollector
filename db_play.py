@@ -1,4 +1,5 @@
 import sqlite3
+import db_sql
 
 db_path = './db_play.db'
 
@@ -13,7 +14,7 @@ def db_init():
     if db == None:
         db = get_db()
     c = db.cursor()
-    c.executescript(sql_init)
+    c.executescript(db_sql.sql_init)
     db.commit()
     c.execute('SELECT * FROM SQLITE_MASTER')
     tables = c.fetchall()
