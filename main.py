@@ -29,7 +29,7 @@ def app_read():
     app_read_overview.main()
     app_read_youtube.main()
     app_read_google_plus.main()
-    app_read_review.main()
+    #app_read_review.main()
 
 def cate_read():
     cate_read_google_play.main()
