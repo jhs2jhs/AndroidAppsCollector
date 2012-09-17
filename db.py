@@ -182,6 +182,7 @@ CREATE TABLE IF NOT EXISTS permission (
 
 #db_path = './android.db'
 db_path = './test.db'
+#db_path = './zoom.db'
 def get_db():
     db = sqlite3.connect(db_path)
     return db

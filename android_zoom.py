@@ -37,6 +37,8 @@ def categories_read_main():
     if status != 200:
         raise Exception('zoom app home http connection errir:%s'%(str(status)))
     soup = BeautifulSoup(body)
+    if soup.body.text.strip().find('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com') > 0:
+        raise Exception('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com')
     divs = soup.body.find_all(name='div', attrs={'id':'categories-list'})
     for div in divs:
         for d in div:
@@ -79,6 +81,8 @@ def category_read(cate_name, cate_path, cate_param):
         if status != 200:
             raise Exception('zoom app category https connection error: %s'%(str(status)))
         soup = BeautifulSoup(body)
+        if soup.body.text.strip().find('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com') > 0:
+            raise Exception('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com')
         ul_fa = soup.find_all(name='ul', attrs={'id':'apps-list'})
         for li_f in ul_fa:
             a_fa = li_f.find_all(name='a', attrs={'class':'goTo'})
@@ -99,7 +103,7 @@ def category_read(cate_name, cate_path, cate_param):
             break
         cate_param = str(int(cate_param)+10)
         # update cate_param
-        util.sleep_i(3)
+        util.sleep_i(10)
         #break
     print cate_path
 
@@ -113,34 +117,37 @@ def app_read_main():
         app_path = row[1]
         app_id = row[2]
         app_read_status = row[3]
-        url = app_path
+        url = app_path.replace('.html', '_download.html').strip()
         print '** zoom app %s **'%(url)
         status, body = zoom_http_get(url)
         if status == 404:
             print '== 404'
-            db.db_execute_g(db.sql_app_insert, ('', ))
+            db.db_execute_g(db.sql_zoom_app_update, ('', app_path, ))
             continue
         if status != 200:
             print 'exception'
             continue
         soup = BeautifulSoup(body)
+        if soup.body.text.strip().find('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com') > 0:
+            raise Exception('Access not allowed. If you think this is an error, please contact us at hello@androidzoom.com')
         ### from here
         app_id = None
-        divs_fa = soup.find_all(name='', attrs={'':''})
+        divs_fa = soup.find_all(name='span', attrs={'class':'package'})
         for divs_f in divs_fa:
-            app_id = None
+            app_id = divs_f.text.replace('Package ', '').strip()
+            print app_id
             db.db_execute_g(db.sql_app_insert, (app_id, ))
-        # app_id 
-        # update app_android_zoom_read
-        # insert app
         db.db_execute_g(db.sql_zoom_app_update, (app_id, app_path))
-        util.sleep_i(3)
+        util.sleep_i(10)
     return finish
     
     
 
 if __name__  == '__main__':
     db.db_init()
-    #categories_read_main()
-    category_read_main()
-    app_read_main()
+    try:
+        categories_read_main()
+        category_read_main()
+        app_read_main()
+    except Exception as e:
+        err.except_p(e)
