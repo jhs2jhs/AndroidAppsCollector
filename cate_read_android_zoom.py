@@ -149,7 +149,7 @@ def main():
     db_init()
     try:
         #categories_read_main() ## comment this if run after first time
-        #category_read_main() ## comment this if run after first time
+        category_read_main() ## comment this if run after first time
         app_read_main()
     except Exception as e:
         err.except_p(e)
