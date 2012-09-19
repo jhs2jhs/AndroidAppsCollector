@@ -13,9 +13,11 @@ import time
 import util
 
 zoom_host_http = 'www.androidzoom.com'
-zoom_conn_http = http.get_conn_http(zoom_host_http)
 zoom_headers_http = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "Accept-Language": "en-UK"}
 zoom_root = 'watch'
+# http without proxy 
+'''
+zoom_conn_http = http.get_conn_http(zoom_host_http)
 def zoom_http_get(url):
     global zoom_conn_http
     if zoom_conn_http == None:
@@ -28,6 +30,30 @@ def zoom_http_post(url, url_body):
         zoom_conn_http = http.get_conn_http(zoom_host_http)
     status, body, zoom_conn_http = http.use_httplib_http(url, 'POST', url_body, zoom_conn_http, zoom_host_http, zoom_headers_http)
     return status, body
+'''
+
+# http proxy here: if not in proxy, please comment this line
+zoom_conn_http = http.get_conn_http_proxy(zoom_host_http)
+def host_http_proxy():
+    global zoom_host_http
+    url_proxy = 'http://%s'%zoom_host_http
+    return url_proxy
+def zoom_http_get(url):
+    global zoom_conn_http
+    if zoom_conn_http == None:
+        zoom_conn_http = http.get_conn_http_proxy(zoom_host_http)
+    url_proxy = host_http_proxy()
+    status, body, zoom_conn_http = http.use_httplib_http_proxy(url, 'GET', '', zoom_conn_http, url_proxy, zoom_headers_http)
+    return status, body
+def zoom_http_post(url, url_body):
+    global zoom_conn_http
+    if zoom_conn_http == None:
+        zoom_conn_http = http.get_conn_http_proxy(zoom_host_http)
+    url_proxy = host_http_proxy()
+    status, body, zoom_conn_http = http.use_httplib_http_proxy(url, zoom_url_proxy, 'POST', url_body, zoom_conn_http, url_proxy, zoom_headers_http)
+    return status, body
+
+
 
 def db_init():
     db_zoom.db_init()
@@ -148,7 +174,7 @@ def app_read_main():
 def main():
     db_init()
     try:
-        #categories_read_main() ## comment this if run after first time
+        categories_read_main() ## comment this if run after first time
         category_read_main() ## comment this if run after first time
         app_read_main()
     except Exception as e:

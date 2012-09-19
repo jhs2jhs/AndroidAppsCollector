@@ -13,10 +13,11 @@ import time
 import util
 
 lib_host_http = 'www.androlib.com'
-#lib_host_http = 'fr.androlib.com'
-lib_conn_http = http.get_conn_http(lib_host_http)
 lib_headers_http = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "Accept-Language": "en-UK"}
 lib_root = 'watch'
+# http, comment if using proxy
+'''
+lib_conn_http = http.get_conn_http(lib_host_http)
 def lib_http_get(url):
     global lib_conn_http
     global lib_host_http
@@ -32,6 +33,35 @@ def lib_http_post(url, url_body):
         lib_conn_http = http.get_conn_http(lib_host_http)
     status, body, lib_conn_http = http.use_httplib_http(url, 'POST', url_body, lib_conn_http, lib_host_http, lib_headers_http)
     return status, body
+'''
+
+# http proxy, comment if not using proxy
+lib_conn_http = http.get_conn_http_proxy(lib_host_http)
+def host_http_proxy():
+    global lib_host_http
+    url_proxy = 'http://%s'%lib_host_http
+    return url_proxy
+def lib_http_get(url):
+    global lib_conn_http
+    global lib_host_http
+    #print lib_host_http, '==='
+    if lib_conn_http == None:
+        #print lib_conn_http, 'None'
+        lib_conn_http = http.get_conn_http_proxy(lib_host_http)
+    url_proxy = host_http_proxy()
+    #print url_proxy, 'url_proxy'
+    status, body, lib_conn_http = http.use_httplib_http_proxy(url, 'GET', '', lib_conn_http, url_proxy, lib_headers_http)
+    return status, body
+def lib_http_post(url, url_body):
+    global lib_conn_http
+    global lib_host_http
+    if lib_conn_http == None:
+        lib_conn_http = http.get_conn_http_proxy(lib_host_http)
+    url_proxy = host_http_proxy()
+    status, body, lib_conn_http = http.use_httplib_http_proxy(url, 'POST', url_body, lib_conn_http, url_proxy, lib_headers_http)
+    return status, body
+
+
 
 
 def db_init():
@@ -66,13 +96,14 @@ def home_read_main():
         try:
             home_read(lang_href)
             db_lib.db_execute_g(db_sql.sql_lib_lang_update, (lang_href,))
+            util.sleep_i(1)
         except Exception as e:
             err.except_p(e)
         #print '======='
         #break
                 
 def home_read(lang_href):
-    url = ''
+    url = '/' ### looks like proxy needs to have /
     print '** home %s | %s **'%(url, lang_href)
     status, body = lib_http_get(url)
     if status != 200:
@@ -124,6 +155,7 @@ def home_read_max(lang_href, menu_href, menu_name):
             cate_href = div_f.a['href'].strip()
             cate_name = div_f.a.text.strip()
             p_num_read(lang_href, menu_href, cate_href, cate_name)
+            util.sleep_i(1)
 
 def p_num_read(lang_href, menu_href, cate_href, cate_name):
     url = '%s'%(cate_href)
@@ -236,9 +268,9 @@ def cate_link_read(link_href, lang_href, cate_path, cate_param):
 def main():
     db_init()
     try:
-        #language_read_main() ## comment this if run after first time
-        #home_read_main() ## comment this if run after first time
-        #home_read_max_main() ## comment this if run after first time
+        language_read_main() ## comment this if run after first time
+        home_read_main() ## comment this if run after first time
+        home_read_max_main() ## comment this if run after first time
         cate_read_main()
         cate_link_read_main()
     except Exception as e:

@@ -6,7 +6,7 @@ import urlparse
 import urllib
 
 strict = 1
-timeout = 60
+timeout = 120
 source_address = None
 '''
 headers = {
@@ -26,17 +26,17 @@ headers = {
 ############## http proxy (https does not need proxy setting) in Nottingham University #############
 host_proxy = '128.243.253.109'
 port_proxy = 8080
-url_proxy = 'https://play.google.com'
 def get_conn_http_proxy(host):
     conn = httplib.HTTPConnection(host=host_proxy, port=port_proxy, strict=strict, timeout=timeout, source_address=source_address)
     return conn
 
-def use_httplib_http_proxy(url, method, url_body, conn, url_proxy, headers):
+def use_httplib_http_proxy(url,  method, url_body, conn, url_proxy, headers):
     try:
         if conn == None:
-            print conn, type(conn)
+            #print conn, type(conn)
             conn = get_conn_http_proxy(host_proxy)
         url = url_proxy+url
+        #print url, 'url'
         conn.request(method=method, url=url, body=url_body, headers=headers)
         status, body = use_httplib_http_resp(conn, headers)
         return status, body, conn
