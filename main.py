@@ -38,6 +38,10 @@ def cate_read():
     
 
 if __name__ == '__main__':
-    main()
+    #main()
+    for i in range(1, 3):
+        main()
+        util.sleep_i(10)
+        print '==== main %d ====='%(i)
 
 

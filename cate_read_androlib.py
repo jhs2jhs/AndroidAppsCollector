@@ -93,6 +93,11 @@ def home_read_main():
         lang_title = row[1]
         lib_host_http = lang_href.replace('http://', '').replace('/', '').strip()
         lib_conn_http = http.get_conn_http(lib_host_http)
+        ''' # if working on horizon pc, uncommit this if and commit above two lines. 
+        if lib_host_http != lang_href.replace('http://', '').replace('/', '').strip():
+            lib_host_http = lang_href.replace('http://', '').replace('/', '').strip()
+            lib_conn_http = http.get_conn_http(lib_host_http)
+        '''
         try:
             home_read(lang_href)
             db_lib.db_execute_g(db_sql.sql_lib_lang_update, (lang_href,))
@@ -135,6 +140,11 @@ def home_read_max_main():
         cate_param_max = row[3]
         lib_host_http = lang_href.replace('http://', '').replace('/', '').strip()
         lib_conn_http = http.get_conn_http(lib_host_http)
+        ''' # if working on horizon pc, uncommit this if, otherwise, commit above two lines. 
+        if lib_host_http != lang_href.replace('http://', '').replace('/', '').strip():
+            lib_host_http = lang_href.replace('http://', '').replace('/', '').strip()
+            lib_conn_http = http.get_conn_http(lib_host_http)
+        '''
         try:
             home_read_max(lang_href, cate_path, cate_title)
         except Exception as e:
@@ -195,7 +205,11 @@ def cate_read_main():
     global lib_host_http
     global lib_conn_http
     rows = db_lib.db_get_g(db_sql.sql_lib_lang_cate_read_get, ())
+    i_t = len(rows)
+    i = 0
     for row in rows:
+        i = i + 1
+        print '%d of %d'%(i, i_t), 
         lang_href = row[0]
         cate_path = row[1]
         cate_param = row[2]
