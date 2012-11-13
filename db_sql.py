@@ -182,6 +182,30 @@ CREATE TABLE IF NOT EXISTS permission (
   perm_individual TEXT, 
   UNIQUE (app_id, perm_group, perm_individual)
 );
+CREATE TABLE IF NOT EXISTS developer (
+  developer_href TEXT NOT NULL UNIQUE,
+  start_num TEXT DEFAULT 0,
+  store_read_status TEXT DEFAULT 0, -- read on google play page to check how many application it has
+  developer_website TEXT,
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT
+);
+CREATE TABLE IF NOT EXISTS developer_app (
+  developer_href TEXT NOT NULL,
+  app_id TEXT NOT NULL,
+  UNIQUE (developer_href, app_id)
+);
+CREATE TABLE IF NOT EXISTS developer_social (
+  developer_website TEXT NOT NULL UNIQUE,
+  real_href TEXT,
+  twitter_href TEXT, 
+  facebook_href TEXT, 
+  google_plus_href TEXT,
+  youtube_href TEXT,  
+  website_read_status TEXT DEFAULT 0, -- read on developer's personal page to check whether it lists twitter or facebook informaiton on it.
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT
+);
 '''
 
 #################
@@ -339,5 +363,57 @@ sql_lib_lang_cate_link_read_update = '''
 UPDATE lib_lang_cate_link_read SET app_id = ?, read_status = 1 WHERE lang_href=? AND cate_path=? AND cate_param=?
 '''
 
+#### developer
+sql_developer_merge_get = '''
+SELECT developer_href, developer_website FROM app WHERE developer_href IS NOT NULL
+'''
+sql_developer_merge_insert = '''
+INSERT OR IGNORE INTO developer (developer_href, developer_website) VALUES (?, ?)
+'''
+sql_developer_read_store_get = '''
+SELECT developer_href, start_num FROM developer WHERE store_read_status = 0
+'''
+sql_developer_website_update = '''
+UPDATE developer SET developer_website = ? WHERE developer_href=?
+'''
+sql_developer_store_start_num_update = '''
+UPDATE developer SET start_num = ? WHERE developer_href=?
+'''
+sql_developer_store_read_status_update = '''
+UPDATE developer SET store_read_status = 1 WHERE developer_href=?
+'''
+sql_developer_app_insert = '''
+INSERT OR IGNORE INTO developer_app (developer_href, app_id) VALUES (?,?)
+'''
+## developer website
+sql_developer_website_merge_get = '''
+SELECT developer_website FROM developer
+'''
+sql_developer_website_merge_insert = '''
+INSERT OR IGNORE INTO developer_social (developer_website) VALUES (?)
+'''
+sql_developer_website_read_get = '''
+SELECT developer_website FROM developer_social WHERE website_read_status = 0
+'''
+sql_developer_website_read_status_update = '''
+UPDATE developer_social SET website_read_status = 1 WHERE developer_website = ?
+'''
+sql_developer_website_real_href_update = '''
+UPDATE developer_social SET real_href = ? WHERE developer_website = ?
+'''
+sql_developer_website_twitter_update = '''
+UPDATE developer_social SET twitter_href = ? WHERE developer_website = ?
+'''
+sql_developer_website_facebook_update = '''
+UPDATE developer_social SET facebook_href = ? WHERE developer_website = ?
+'''
+sql_developer_website_youtube_update = '''
+UPDATE developer_social SET youtube_href = ? WHERE developer_website = ?
+'''
+sql_developer_website_google_plus_update = '''
+UPDATE developer_social SET google_plus_href = ? WHERE developer_website = ?
+'''
+
 if __name__ == '__main__':
     db_init()
+
