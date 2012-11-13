@@ -86,7 +86,11 @@ def categories_read_main():
 def category_read_main():
     finish = True
     rows = db_zoom.db_get_g(db_sql.sql_zoom_cate_read_get, ())
+    i_t = len(rows)
+    i = 0
     for row in rows:
+        i = i + 1
+        print '%d of %d'%(i, i_t)
         finish = False
         cate_name = row[0]
         cate_path = row[1]
@@ -141,13 +145,18 @@ def category_read(cate_name, cate_path, cate_param):
 def app_read_main():
     finish = True
     rows = db_zoom.db_get_g(db_sql.sql_zoom_app_get, ())
+    i_t = len(rows)
+    i = 0
     for row in rows:
+        i = i + 1
+        print '%d of %d'%(i, i_t), 
         finish = False
         app_name = row[0]
         app_path = row[1]
         app_id = row[2]
         app_read_status = row[3]
         url = app_path.replace('.html', '_download.html').strip()
+        #url = app_path.replace('.html', '_download.html?nav=halloween').strip()
         print '** zoom app %s **'%(url)
         status, body = zoom_http_get(url)
         if status == 404:

@@ -21,7 +21,11 @@ def review_read_main_init():
         
 def review_read_main():
     rows = db_app.db_get_g(db_sql.sql_review_read_get, ())
+    i_t = len(rows)
+    i = 0
     for row in rows:
+        i = i + 1
+        print '%d of %d'%(i, i_t), 
         app_id = row[0]
         page_num = row[1]
         #page_num = 490
