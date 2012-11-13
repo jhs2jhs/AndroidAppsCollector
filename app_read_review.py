@@ -124,6 +124,7 @@ def main():
     db_app.db_init()
     finish = False
     review_read_main_init()
+    finish = review_read_main()
     while finish == False:
         try:
             finish = review_read_main()

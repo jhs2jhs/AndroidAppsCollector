@@ -19,17 +19,32 @@ def db_init():
 #####
 def app_read_main():
     finish = True
+    try:
+        finish = app_read_main_temp()
+        return finish
+    except Exception as e:
+        err.except_p('e')
+        finish = False
+        return finish
+
+def app_read_main_temp():
+    finish = True
     rows = db_app.db_get_g(db_sql.sql_app_read_get, ())
+    i_t = len(rows)
+    i = 0
     for row in rows:
+        i = i + 1
+        print '%d of %d'%(i, i_t), 
         finish = False
         app_id = row[0]
         app_read(app_id)
+        util.sleep()
     return finish 
 
 def app_read(app_id):
-    url = '/%s/details?id=%s'%(android_root, app_id)
-    print '** app %s **'%(url)
     try:
+        url = '/%s/details?id=%s'%(android_root, app_id)
+        print '** app %s **'%(url)
         status, body = android_https_get(url)
         #print status, body
         if status == 404:
@@ -44,7 +59,7 @@ def app_read(app_id):
         app_read_tab_review(app_id, soup)
         app_read_tab_permission(app_id, soup)
         db_app.db_execute_g(db_sql.sql_app_read_update, (1, str(datetime.now()), app_id))
-        util.sleep()
+        #util.sleep()
     except Exception as e:
         err.except_p(e)
 
@@ -262,6 +277,9 @@ def main():
         except Exception as e:
             err.except_p(e)
 
+def main_temp():
+    db_init()
+    finish = app_read_main_temp()
 
 if __name__ == '__main__':
     main()

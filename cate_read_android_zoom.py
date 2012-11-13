@@ -100,6 +100,7 @@ def category_read(cate_name, cate_path, cate_param):
     status = 200
     while status == 200:
         url = '%s/?p=%s'%(cate_path, cate_param)
+        #url = '%s/?p=%s&nav=halloween'%(cate_path, cate_param) # for special cases
         print '** zoom category %s %s **'%(cate_param, cate_path)
         status, body = zoom_http_get(url)
         if status == 404:
