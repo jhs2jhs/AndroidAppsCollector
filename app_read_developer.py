@@ -12,25 +12,27 @@ import err
 import time
 import util
 from cate_read_google_play import *
+import db_developer
 
 def db_init():
+    db_developer.db_init()
     db_app.db_init()
 
 def developer_merge():
     rows = db_app.db_get_g(db_sql.sql_developer_merge_get, ())
     i_t = len(rows)
-    print '** start to merge developer list %d **'%(i_t)
+    print '** start to merge developer list %d from %s to %s **'%(i_t, db_app.db_path, db_developer.db_path)
     i = 0 
     p = 0
     for row in rows:
         developer_href = row[0]
         developer_website = row[1]
-        db_app.db_execute_g(db_sql.sql_developer_merge_insert, (developer_href, developer_website, ))
-        p, i = util.p_percent(p, i, i_t, 5)
+        db_developer.db_execute_g(db_sql.sql_developer_merge_insert, (developer_href, developer_website, ))
+        p, i = util.p_percent(p, i, i_t, 1)
 
 def developer_read_store_main():
     finish = True
-    rows = db_app.db_get_g(db_sql.sql_developer_read_store_get, ())
+    rows = db_developer.db_get_g(db_sql.sql_developer_read_store_get, ())
     i_t = len(rows)
     i = 0
     for row in rows:
@@ -56,14 +58,14 @@ def developer_read_store(developer_href, start_num):
         status, body = android_https_get(url)
         if status == 404:
             print '== 404'
-            db_app.db_execute_g(db_sql.sql_developer_store_read_status_update, (developer_href, )) 
+            db_developer.db_execute_g(db_sql.sql_developer_store_read_status_update, (developer_href, )) 
             return False
         if status != 200:
             raise Exception('app read https connection error: %s'%(str(status)))
         soup = BeautifulSoup(body)
         developer_read_store_website(developer_href, soup)
         developer_read_store_app(developer_href, soup)
-        db_app.db_execute_g(db_sql.sql_developer_store_start_num_update, (start_num, developer_href,)) ## record this page has been successfully read
+        db_developer.db_execute_g(db_sql.sql_developer_store_start_num_update, (start_num, developer_href,)) ## record this page has been successfully read
         return True
     except Exception as e:
         err.except_p(e)
@@ -71,11 +73,10 @@ def developer_read_store(developer_href, start_num):
 
 def developer_read_store_app(developer_href, soup):
     apps_fa = soup.find_all(name='li', attrs={'class':'goog-inline-block'})
-    #print 'app number: %d'%(len(apps_fa))
     for li in apps_fa:
         if li.has_key('data-docid'):
             app_id = li['data-docid'].strip()
-            db_app.db_execute_g(db_sql.sql_developer_app_insert, (developer_href, app_id, ))
+            db_developer.db_execute_g(db_sql.sql_developer_app_insert, (developer_href, app_id, ))
             print '\t%s'%(app_id)
 
 def developer_read_store_website(developer_href, soup):
@@ -85,20 +86,12 @@ def developer_read_store_website(developer_href, soup):
         if website_f.a != None:
             if website_f.a.has_key('href'):
                 developer_website = website_f.a['href'].strip()
-                db_app.db_execute_g(db_sql.sql_developer_website_update, (developer_website, developer_href, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_update, (developer_website, developer_href, ))
                 #print developer_website
 
 
-'''
-select * from (
-select developer_href, count(*) as c
-from app 
-where developer_href is not null
-group by developer_href ) as a order by a.c
-
- and developer_href is '/store/apps/developer?id=Tencent+Technology+(Shenzhen)+Company+Ltd.'        
-'''
-
+############ developer external web site check, it does not need to within google player page 
+## developer merge 
 def website_merge():
     rows = db_app.db_get_g(db_sql.sql_developer_website_merge_get, ())
     i_t = len(rows)
@@ -107,12 +100,12 @@ def website_merge():
     p = 0
     for row in rows:
         developer_website = row[0]
-        db_app.db_execute_g(db_sql.sql_developer_website_merge_insert, (developer_website, ))
+        db_developer.db_execute_g(db_sql.sql_developer_website_merge_insert, (developer_website, ))
         p, i = util.p_percent(p, i, i_t, 5)
 
 def website_read_main():
     print 'start'
-    rows = db_app.db_get_g(db_sql.sql_developer_website_read_get, ())
+    rows = db_developer.db_get_g(db_sql.sql_developer_website_read_get, ())
     i_t = len(rows)
     i = 0
     for row in rows:
@@ -123,22 +116,22 @@ def website_read_main():
         website_q = urlparse.parse_qs(website_qs)
         if website_q.has_key('q') and len(website_q['q'])>0:
             real_href = website_q['q'][0].strip()
-            db_app.db_execute_g(db_sql.sql_developer_website_real_href_update, (real_href, developer_website, ))
+            db_developer.db_execute_g(db_sql.sql_developer_website_real_href_update, (real_href, developer_website, ))
             if len(real_href) < 8:
-                db_app.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
                 continue
             print real_href
             if 'facebook.com' in real_href:
-                db_app.db_execute_g(db_sql.sql_developer_website_facebook_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_facebook_update, (real_href, developer_website, ))
                 continue
             if 'twitter.com' in real_href:
-                db_app.db_execute_g(db_sql.sql_developer_website_twitter_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_twitter_update, (real_href, developer_website, ))
                 continue
             if 'plus.google.com' in real_href:
-                db_app.db_execute_g(db_sql.sql_developer_website_google_plus_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_google_plus_update, (real_href, developer_website, ))
                 continue
             if 'youtube.com' in real_href:
-                db_app.db_execute_g(db_sql.sql_developer_website_youtube_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_youtube_update, (real_href, developer_website, ))
                 continue
             website_read(developer_website, real_href)
             #break
@@ -164,7 +157,7 @@ def website_read(developer_website, real_href):
         website_facebook(developer_website, soup)
         website_youtube(developer_website, soup)
         website_google_plus(developer_website, soup)
-        db_app.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
+        db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
         br.clear_history()
     except urllib2.URLError as e:  #### need to fingure out error handler
         err.except_p(e)
@@ -180,7 +173,7 @@ def website_twitter(developer_website, soup):
             hrefs = '%s:%s'%(hrefs, href)
             print '\t%s'%href
     #print hrefs
-    db_app.db_execute_g(db_sql.sql_developer_website_twitter_update, (hrefs, developer_website, ))
+    db_developer.db_execute_g(db_sql.sql_developer_website_twitter_update, (hrefs, developer_website, ))
 
 def website_facebook(developer_website, soup):
     hrefs = ''
@@ -191,7 +184,7 @@ def website_facebook(developer_website, soup):
             hrefs = '%s:%s'%(hrefs, href)
             print '\t%s'%href
     #print hrefs
-    db_app.db_execute_g(db_sql.sql_developer_website_facebook_update, (hrefs, developer_website, ))
+    db_developer.db_execute_g(db_sql.sql_developer_website_facebook_update, (hrefs, developer_website, ))
 
 def website_youtube(developer_website, soup):
     hrefs = ''
@@ -202,7 +195,7 @@ def website_youtube(developer_website, soup):
             hrefs = '%s:%s'%(hrefs, href)
             print '\t%s'%href
     #print hrefs
-    db_app.db_execute_g(db_sql.sql_developer_website_youtube_update, (hrefs, developer_website, ))
+    db_developer.db_execute_g(db_sql.sql_developer_website_youtube_update, (hrefs, developer_website, ))
 
 def website_google_plus(developer_website, soup):
     hrefs = ''
@@ -213,12 +206,82 @@ def website_google_plus(developer_website, soup):
             hrefs = '%s:%s'%(hrefs, href)
             print '\t%s'%href
     #print hrefs
-    db_app.db_execute_g(db_sql.sql_developer_website_google_plus_update, (hrefs, developer_website, ))
+    db_developer.db_execute_g(db_sql.sql_developer_website_google_plus_update, (hrefs, developer_website, ))
+
+#### db merge 
+def db_merge_developer():
+    rows = db_developer.db_get_g(db_sql.sql_merge_developer_app_get_developer, ())
+    i_t = len(rows)
+    print '* merge developer from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
+    i = 0
+    p = 0
+    for row in rows:
+        developer_href = row[0]
+        start_num = row[1]
+        store_read_status = row[2]
+        developer_website = row[3]
+        scrape_create_date = row[4]
+        scrape_update_date = row[5]
+        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer, (developer_href, start_num, store_read_status, developer_website, scrape_create_date, scrape_update_date, ))
+        p, i = util.p_percent(p, i, i_t, 1)
+
+def db_merge_developer_app():
+    rows = db_developer.db_get_g(db_sql.sql_merge_developer_app_get_developer_app, ())
+    i_t = len(rows)
+    print '* merge developer_app from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
+    i = 0
+    p = 0
+    for row in rows:
+        developer_href = row[0]
+        app_id = row[1]
+        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer_app, (developer_href, app_id ))
+        db_app.db_execute_g(db_sql.sql_app_insert, (app_id, ))
+        p, i = util.p_percent(p, i, i_t, 1)
+
+def db_merge_developer_social():
+    rows = db_developer.db_get_g(db_sql.sql_merge_developer_app_get_developer_social, ())
+    i_t = len(rows)
+    print '* merge developer_social from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
+    i = 0
+    p = 0
+    for row in rows:
+        developer_website = row[0]
+        real_href = row[1]
+        twitter_href = row[2]
+        facebook_href = row[3]
+        google_plus_href = row[4]
+        youtube_href = row[5]
+        website_read_status = row[6]
+        scrape_create_date = row[3]
+        scrape_update_date = row[4]
+        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer_social, (developer_website, real_href, twitter_href, facebook_href, google_plus_href, youtube_href, website_read_status, scrape_create_date, scrape_update_date, ))
+        p, i = util.p_percent(p, i, i_t, 1)
+
     
 
-if __name__ == '__main__':
+def from_developer_to_app_developer():
     db_init()
     #developer_merge()
-    #developer_read_store_main()
+    developer_read_store_main()
+
+def from_app_to_developer_developer():
+    db_init()
+    db_merge_developer()
+    db_merge_developer_app()
+
+def from_developer_to_app_website():
+    db_init()
     website_merge()
     website_read_main()
+
+def from_app_to_developer_website():
+    db_init()
+    db_merge_developer_social()
+
+
+if __name__ == '__main__':
+    #from_developer_to_app_developer()
+    #from_app_to_developer_developer()
+    #
+    #from_developer_to_app_website()
+    from_app_to_developer_website()

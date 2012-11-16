@@ -14,7 +14,7 @@ def sleep_test():
 ## use to print the percent of progress 
 def p_percent(p, i, i_t, percent):
     if i >= int(i_t*p/100):
-        print str(p)+'%'+'..',
+        print '\t'+str(p)+'%'+'..'
         p = p + percent
     i = i + 1
     return p, i

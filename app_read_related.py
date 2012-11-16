@@ -22,13 +22,14 @@ def db_init():
 def related_read_merge():
     rows = db_app.db_get_g(db_sql.sql_related_merge_get, ())
     i_t = len(rows)
-    print '** start to merge related list %d from %s to %s **'%(i_t, db_app.db_path, db_related.db_path)
+    print '** start to merge related list %d from %s to %s %d **'%(i_t, db_app.db_path, db_related.db_path, i_t)
     i = 0 
     p = 0
     for row in rows:
         app_id = row[0]
         db_related.db_execute_g(db_sql.sql_related_merge_insert, (app_id, ))
-        p, i = util.p_percent(p, i, i_t, 5)
+        p, i = util.p_percent(p, i, i_t, 1)
+        #print str(p)+'%'+'..',
 
 def related_read_main():
     finish = True
@@ -87,10 +88,12 @@ def related_install(app_id, soup):
                 db_related.db_execute_g(db_sql.sql_related_view_insert, (app_id, also_app_id, i, ))
                 print '\t', i, also_app_id
 
+
+#### db_merge 
 def db_merge_related():
-    print '* merge related from %s to %s *'%(db_related.db_path, db_app.db_path)
     rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related, ())
     i_t = len(rows)
+    print '* merge related from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
     for row in rows:
@@ -102,9 +105,9 @@ def db_merge_related():
         p, i = util.p_percent(p, i, i_t, 1)
 
 def db_merge_related_view():
-    print '* merge related_view from %s to %s *'%(db_related.db_path, db_app.db_path)
     rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_view, ())
     i_t = len(rows)
+    print '* merge related_view from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
     for row in rows:
@@ -116,9 +119,9 @@ def db_merge_related_view():
         p, i = util.p_percent(p, i, i_t, 1)
 
 def db_merge_related_install():
-    print '* merge related_install from %s to %s *'%(db_related.db_path, db_app.db_path)
     rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_install, ())
     i_t = len(rows)
+    print '* merge related_install from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
     for row in rows:
@@ -138,9 +141,16 @@ def db_merge_main():
     db_merge_related_install()
 
 
-if __name__ == '__main__':
+def from_app_to_related(): # to read related
     db_init()
     #related_read_merge()
-    #related_read_main()
+    related_read_main()
+
+def from_related_to_app():
+    db_init()
     db_merge_main()
+
+if __name__ == '__main__':
+    #from_app_to_related()
+    from_related_to_app()
     

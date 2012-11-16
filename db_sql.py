@@ -433,6 +433,24 @@ UPDATE developer_social SET youtube_href = ? WHERE developer_website = ?
 sql_developer_website_google_plus_update = '''
 UPDATE developer_social SET google_plus_href = ? WHERE developer_website = ?
 '''
+sql_merge_developer_app_get_developer = '''
+SELECT developer_href, start_num, store_read_status, developer_website, scrape_create_date, scrape_update_date FROM developer
+'''
+sql_merge_developer_app_insert_developer = '''
+INSERT OR REPLACE INTO developer (developer_href, start_num, store_read_status, developer_website, scrape_create_date, scrape_update_date) VALUES (?,?,?,?,?,?)
+'''
+sql_merge_developer_app_get_developer_app = '''
+SELECT developer_href, app_id FROM developer_app
+'''
+sql_merge_developer_app_insert_developer_app = '''
+INSERT OR IGNORE INTO developer_app (developer_href, app_id) VALUES (?,?)
+'''
+sql_merge_developer_app_get_developer_social = '''
+SELECT developer_website, real_href, twitter_href, facebook_href, google_plus_href, youtube_href, website_read_status, scrape_create_date, scrape_update_date FROM developer_social
+'''
+sql_merge_developer_app_insert_developer_social = '''
+INSERT OR REPLACE INTO developer_social (developer_website, real_href, twitter_href, facebook_href, google_plus_href, youtube_href, website_read_status, scrape_create_date, scrape_update_date) VALUES (?,?,?,?,?,?,?,?,?)
+'''
 
 
 # related app
