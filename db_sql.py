@@ -182,6 +182,7 @@ CREATE TABLE IF NOT EXISTS permission (
   perm_individual TEXT, 
   UNIQUE (app_id, perm_group, perm_individual)
 );
+--- developer 
 CREATE TABLE IF NOT EXISTS developer (
   developer_href TEXT NOT NULL UNIQUE,
   start_num TEXT DEFAULT 0,
@@ -205,6 +206,25 @@ CREATE TABLE IF NOT EXISTS developer_social (
   website_read_status TEXT DEFAULT 0, -- read on developer's personal page to check whether it lists twitter or facebook informaiton on it.
   scrape_create_date TEXT, 
   scrape_update_date TEXT
+);
+---- related : 1. people who install this also intall that, 2. people who review this also review that 
+CREATE TABLE IF NOT EXISTS related (
+  app_id TEXT NOT NULL UNIQUE,
+  read_status TEXT DEFAULT 0, 
+  scrape_create_date TEXT, 
+  scrape_update_date TEXT
+);
+CREATE TABLE IF NOT EXISTS related_view (
+  app_id developer_website TEXT NOT NULL,
+  also_app_id TEXT NOT NULL, 
+  place TEXT, -- the order display in the webpage
+  UNIQUE (app_id, also_app_id)
+);
+CREATE TABLE IF NOT EXISTS related_install (
+  app_id developer_website TEXT NOT NULL UNIQUE,
+  also_app_id TEXT NOT NULL, 
+  place TEXT, -- the order display in the webpage
+  UNIQUE (app_id, also_app_id)
 );
 '''
 
@@ -412,6 +432,27 @@ UPDATE developer_social SET youtube_href = ? WHERE developer_website = ?
 '''
 sql_developer_website_google_plus_update = '''
 UPDATE developer_social SET google_plus_href = ? WHERE developer_website = ?
+'''
+
+
+# related app
+sql_related_merge_get = '''
+SELECT app_id FROM app WHERE developer_href IS NOT NULL AND read_status = 1
+'''
+sql_related_merge_insert = '''
+INSERT OR IGNORE INTO related (app_id) VALUES (?)
+'''
+sql_related_get = '''
+SELECT app_id FROM related WHERE read_status = 0
+'''
+sql_related_read_update = '''
+UPDATE related SET read_status = ?, scrape_create_date = ? WHERE app_id = ?
+'''
+sql_related_view_insert = '''
+INSERT OR IGNORE INTO related_view (app_id, also_app_id, place) VALUES (?,?,?)
+'''
+sql_related_install_insert = '''
+INSERT OR IGNORE INTO related_install (app_id, also_app_id, place) VALUES (?,?,?)
 '''
 
 if __name__ == '__main__':
