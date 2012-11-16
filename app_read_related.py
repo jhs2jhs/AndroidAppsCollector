@@ -112,6 +112,7 @@ def db_merge_related_view():
         also_app_id = row[1]
         place = row[2]
         db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_view, (app_id, also_app_id, place,))
+        db_app.db_execute_g(db_sql.sql_app_insert, (also_app_id, ))
         p, i = util.p_percent(p, i, i_t, 1)
 
 def db_merge_related_install():
@@ -125,6 +126,8 @@ def db_merge_related_install():
         also_app_id = row[1]
         place = row[2]
         db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_install, (app_id, also_app_id, place, ))
+        db_app.db_execute_g(db_sql.sql_app_insert, (also_app_id, ))
+        p, i = util.p_percent(p, i, i_t, 1)
 
 
 def db_merge_main():
