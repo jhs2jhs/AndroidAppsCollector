@@ -13,24 +13,26 @@ import time
 import util
 from cate_read_google_play import *
 import sqlite3
+import db_related
 
 def db_init():
+    db_related.db_init()
     db_app.db_init()
 
-def related_merge():
+def related_read_merge():
     rows = db_app.db_get_g(db_sql.sql_related_merge_get, ())
     i_t = len(rows)
-    print '** start to merge related list %d **'%(i_t)
+    print '** start to merge related list %d from %s to %s **'%(i_t, db_app.db_path, db_related.db_path)
     i = 0 
     p = 0
     for row in rows:
         app_id = row[0]
-        db_app.db_execute_g(db_sql.sql_related_merge_insert, (app_id, ))
+        db_related.db_execute_g(db_sql.sql_related_merge_insert, (app_id, ))
         p, i = util.p_percent(p, i, i_t, 5)
 
 def related_read_main():
     finish = True
-    rows = db_app.db_get_g(db_sql.sql_related_get, ())
+    rows = db_related.db_get_g(db_sql.sql_related_get, ())
     i_t = len(rows)
     i = 0
     for row in rows:
@@ -49,14 +51,14 @@ def related_read(app_id):
         #print status, body
         if status == 404:
             print '== 404'
-            db_app.db_execute_g(db_sql.sql_related_read_update, (1, str(datetime.now()), app_id))
+            db_related.db_execute_g(db_sql.sql_related_read_update, (1, str(datetime.now()), app_id))
             return 
         if status != 200:
             raise Exception('related read https connection error: %s'%(str(status)))
         soup = BeautifulSoup(body)
         related_view(app_id, soup)
         related_install(app_id, soup)
-        db_app.db_execute_g(db_sql.sql_related_read_update, (1, str(datetime.now()), app_id))
+        db_related.db_execute_g(db_sql.sql_related_read_update, (1, str(datetime.now()), app_id))
         util.sleep()
     except Exception as e:
         err.except_p(e)
@@ -82,18 +84,12 @@ def related_install(app_id, soup):
             i = i + 1
             if div.has_key('data-docid'):
                 also_app_id = div['data-docid'].strip()
-                db_app.db_execute_g(db_sql.sql_related_view_insert, (app_id, also_app_id, i, ))
+                db_related.db_execute_g(db_sql.sql_related_view_insert, (app_id, also_app_id, i, ))
                 print '\t', i, also_app_id
 
-def db_merge_related(db1, db2):
-    print '* merge related from %s to %s *'%(db1, db2)
-    conn_db1 = sqlite3.connect(db1)
-    conn_db2 = sqlite3.connect(db2)
-    c1 = conn_db1.cursor()
-    c2 = conn_db2.cursor()
-    sql1 = '''SELECT app_id, read_status, scrape_create_date, scrape_update_date FROM related'''
-    c1.execute(sql1, ())
-    rows = c1.fetchall()
+def db_merge_related():
+    print '* merge related from %s to %s *'%(db_related.db_path, db_app.db_path)
+    rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related, ())
     i_t = len(rows)
     i = 0
     p = 0
@@ -102,22 +98,12 @@ def db_merge_related(db1, db2):
         read_status = row[1]
         scrape_create_date = row[2]
         scrape_update_date = row[3]
-        sql2 = '''INSERT OR REPLACE INTO related (app_id, read_status, scrape_create_date, scrape_update_date) VALUES (?,?,?,?)'''
-        c2.execute(sql2, (app_id, read_status, scrape_create_date, scrape_update_date, ))
-        conn_db2.commit()
+        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related, (app_id, read_status, scrape_create_date, scrape_update_date, ))
         p, i = util.p_percent(p, i, i_t, 1)
-    c1.close()
-    c2.close()
 
-def db_merge_related_view(db1, db2):
-    print '* merge related_view from %s to %s *'%(db1, db2)
-    conn_db1 = sqlite3.connect(db1)
-    conn_db2 = sqlite3.connect(db2)
-    c1 = conn_db1.cursor()
-    c2 = conn_db2.cursor()
-    sql1 = '''SELECT app_id, also_app_id, place FROM related_view'''
-    c1.execute(sql1, ())
-    rows = c1.fetchall()
+def db_merge_related_view():
+    print '* merge related_view from %s to %s *'%(db_related.db_path, db_app.db_path)
+    rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_view, ())
     i_t = len(rows)
     i = 0
     p = 0
@@ -125,22 +111,12 @@ def db_merge_related_view(db1, db2):
         app_id = row[0]
         also_app_id = row[1]
         place = row[2]
-        sql2 = '''INSERT OR IGNORE INTO related_view (app_id, also_app_id, place) VALUES (?,?,?)'''
-        c2.execute(sql2, (app_id, also_app_id, place, ))
-        conn_db2.commit()
+        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_view, (app_id, also_app_id, place,))
         p, i = util.p_percent(p, i, i_t, 1)
-    c1.close()
-    c2.close()
 
-def db_merge_related_install(db1, db2):
-    print '* merge related_install from %s to %s *'%(db1, db2)
-    conn_db1 = sqlite3.connect(db1)
-    conn_db2 = sqlite3.connect(db2)
-    c1 = conn_db1.cursor()
-    c2 = conn_db2.cursor()
-    sql1 = '''SELECT app_id, also_app_id, place FROM related_install'''
-    c1.execute(sql1, ())
-    rows = c1.fetchall()
+def db_merge_related_install():
+    print '* merge related_install from %s to %s *'%(db_related.db_path, db_app.db_path)
+    rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_install, ())
     i_t = len(rows)
     i = 0
     p = 0
@@ -148,25 +124,20 @@ def db_merge_related_install(db1, db2):
         app_id = row[0]
         also_app_id = row[1]
         place = row[2]
-        sql2 = '''INSERT OR IGNORE INTO related_install (app_id, also_app_id, place) VALUES (?,?,?)'''
-        c2.execute(sql2, (app_id, also_app_id, place, ))
-        conn_db2.commit()
-        p, i = util.p_percent(p, i, i_t, 1)
-    c1.close()
-    c2.close()
+        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_install, (app_id, also_app_id, place, ))
 
 
-def db_merge_main(db1, db2):
-    db_merge_related(db1, db2)
+def db_merge_main():
+    db_merge_related()
     print 
-    db_merge_related_view(db1, db2)
+    db_merge_related_view()
     print 
-    db_merge_related_install(db1, db2)
+    db_merge_related_install()
 
 
 if __name__ == '__main__':
     db_init()
-    #related_merge()
+    #related_read_merge()
     #related_read_main()
-    db_merge_main('./db_app_related.db', db_app.db_path)
+    db_merge_main()
     

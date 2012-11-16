@@ -454,6 +454,25 @@ INSERT OR IGNORE INTO related_view (app_id, also_app_id, place) VALUES (?,?,?)
 sql_related_install_insert = '''
 INSERT OR IGNORE INTO related_install (app_id, also_app_id, place) VALUES (?,?,?)
 '''
+sql_merge_related_app_get_related = '''
+SELECT app_id, read_status, scrape_create_date, scrape_update_date FROM related
+'''
+sql_merge_related_app_insert_related = '''
+INSERT OR REPLACE INTO related (app_id, read_status, scrape_create_date, scrape_update_date) VALUES (?,?,?,?)
+'''
+sql_merge_related_app_get_related_view = '''
+SELECT app_id, also_app_id, place FROM related_view
+'''
+sql_merge_related_app_insert_related_view = '''
+INSERT OR IGNORE INTO related_view (app_id, also_app_id, place) VALUES (?,?,?)
+'''
+sql_merge_related_app_get_related_install = '''
+SELECT app_id, also_app_id, place FROM related_install
+'''
+sql_merge_related_app_insert_related_install = '''
+INSERT OR IGNORE INTO related_install (app_id, also_app_id, place) VALUES (?,?,?)
+'''
+
 
 if __name__ == '__main__':
     db_init()

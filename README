@@ -2,3 +2,13 @@ Purpose: Scraping information of app in Android Market.
 
 Details can look at the wiki: https://github.com/jianhuashao/AndroidAppsCollector/wiki
 
+
+1. app list get: cate_read_google_play, cate_read_zoom, cate_read_lib
+2. app read: app_read
+3. app developer: 
+4. app related: 
+5. app read
+6: app developer
+5. app related
+6. app read
+
