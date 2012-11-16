@@ -1,5 +1,6 @@
 import sqlite3
 import db_sql
+import util
 
 db_path = './db_app.db'
 
@@ -50,12 +51,17 @@ def db_merge(db1, db2):
     c2 = conn_db2.cursor()
     sql1 = '''SELECT app_id, rank FROM app'''
     c1.execute(sql1, ())
-    for row in c1.fetchall():
+    rows = c1.fetchall()
+    i_t = len(rows)
+    i = 0
+    p = 0
+    for row in rows:
         app_id = row[0]
         rank = row[1]
         sql2 = db_sql.sql_app_insert_with_rank
         c2.execute(sql2, (app_id, rank, ))
         conn_db2.commit()
+        p, i = util.p_percent(p, i, i_t, 1)
     c1.close()
     c2.close()
 

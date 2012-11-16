@@ -15,14 +15,17 @@ import db_lib
 def main():
     #cate_read()
     db_merge()
-    app_read()
+    #app_read()
 
 def db_merge():
     db_app.db_init()
     print '** start db_merge **'
     db_app.db_merge(db_play.db_path, db_app.db_path)
+    print
     db_app.db_merge(db_lib.db_path, db_app.db_path)
+    print 
     db_app.db_merge(db_zoom.db_path, db_app.db_path)
+    print 
     print '** end db_merge **'
 
 def app_read():
