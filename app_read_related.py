@@ -25,11 +25,15 @@ def related_read_merge():
     print '** start to merge related list %d from %s to %s %d **'%(i_t, db_app.db_path, db_related.db_path, i_t)
     i = 0 
     p = 0
+    db = db_related.db
+    c = db.cursor()
     for row in rows:
         app_id = row[0]
-        db_related.db_execute_g(db_sql.sql_related_merge_insert, (app_id, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_related_merge_insert, (app_id, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
         #print str(p)+'%'+'..',
+    db.commit()
+    c.close()
 
 def related_read_main():
     finish = True
@@ -96,13 +100,17 @@ def db_merge_related():
     print '* merge related from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         app_id = row[0]
         read_status = row[1]
         scrape_create_date = row[2]
         scrape_update_date = row[3]
-        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related, (app_id, read_status, scrape_create_date, scrape_update_date, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_related_app_insert_related, (app_id, read_status, scrape_create_date, scrape_update_date, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 def db_merge_related_view():
     rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_view, ())
@@ -110,13 +118,17 @@ def db_merge_related_view():
     print '* merge related_view from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         app_id = row[0]
         also_app_id = row[1]
         place = row[2]
-        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_view, (app_id, also_app_id, place,))
-        db_app.db_execute_g(db_sql.sql_app_insert, (also_app_id, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_related_app_insert_related_view, (app_id, also_app_id, place,))
+        c.execute(db_sql.sql_app_insert, (also_app_id, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 def db_merge_related_install():
     rows = db_related.db_get_g(db_sql.sql_merge_related_app_get_related_install, ())
@@ -124,13 +136,15 @@ def db_merge_related_install():
     print '* merge related_install from %s to %s %d *'%(db_related.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         app_id = row[0]
         also_app_id = row[1]
         place = row[2]
-        db_app.db_execute_g(db_sql.sql_merge_related_app_insert_related_install, (app_id, also_app_id, place, ))
-        db_app.db_execute_g(db_sql.sql_app_insert, (also_app_id, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_related_app_insert_related_install, (app_id, also_app_id, place, ))
+        c.execute(db_sql.sql_app_insert, (also_app_id, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
 
 
 def db_merge_main():

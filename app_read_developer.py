@@ -21,14 +21,18 @@ def db_init():
 def developer_merge():
     rows = db_app.db_get_g(db_sql.sql_developer_merge_get, ())
     i_t = len(rows)
-    print '** start to merge developer list %d from %s to %s **'%(i_t, db_app.db_path, db_developer.db_path)
+    print '** start to merge developer test list %d from %s to %s **'%(i_t, db_app.db_path, db_developer.db_path)
     i = 0 
     p = 0
+    db = db_developer.db
+    c = db.cursor()
     for row in rows:
         developer_href = row[0]
         developer_website = row[1]
-        db_developer.db_execute_g(db_sql.sql_developer_merge_insert, (developer_href, developer_website, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_developer_merge_insert, (developer_href, developer_website, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 def developer_read_store_main():
     finish = True
@@ -93,15 +97,19 @@ def developer_read_store_website(developer_href, soup):
 ############ developer external web site check, it does not need to within google player page 
 ## developer merge 
 def website_merge():
-    rows = db_app.db_get_g(db_sql.sql_developer_website_merge_get, ())
+    rows = db_developer.db_get_g(db_sql.sql_developer_website_merge_get, ())
     i_t = len(rows)
     print '** start to merge developer social %d **'%(i_t)
     i = 0
     p = 0
+    db = db_developer.db
+    c = db.cursor()
     for row in rows:
         developer_website = row[0]
-        db_developer.db_execute_g(db_sql.sql_developer_website_merge_insert, (developer_website, ))
-        p, i = util.p_percent(p, i, i_t, 5)
+        c.execute(db_sql.sql_developer_website_merge_insert, (developer_website, ))
+        p, i = util.p_percent_copy(p, i, i_t, 5, db)
+    db.commit()
+    c.close()
 
 def website_read_main():
     print 'start'
@@ -143,7 +151,8 @@ br = mechanize.Browser()
 #br.set_proxies({"http": "joe:password@myproxy.example.com:3128","ftp": "proxy.example.com",}) # proxy example 
 #br.set_proxies({'http':''})
 br.set_handle_refresh(True)
-br.set_debug_redirects(True)
+br.set_handle_robots(False)
+#br.set_debug_redirects(True)
 #br.set_debug_http(True)
 
 def website_read(developer_website, real_href):
@@ -215,6 +224,8 @@ def db_merge_developer():
     print '* merge developer from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         developer_href = row[0]
         start_num = row[1]
@@ -222,8 +233,10 @@ def db_merge_developer():
         developer_website = row[3]
         scrape_create_date = row[4]
         scrape_update_date = row[5]
-        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer, (developer_href, start_num, store_read_status, developer_website, scrape_create_date, scrape_update_date, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_developer_app_insert_developer, (developer_href, start_num, store_read_status, developer_website, scrape_create_date, scrape_update_date, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 def db_merge_developer_app():
     rows = db_developer.db_get_g(db_sql.sql_merge_developer_app_get_developer_app, ())
@@ -231,12 +244,16 @@ def db_merge_developer_app():
     print '* merge developer_app from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         developer_href = row[0]
         app_id = row[1]
-        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer_app, (developer_href, app_id ))
-        db_app.db_execute_g(db_sql.sql_app_insert, (app_id, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_developer_app_insert_developer_app, (developer_href, app_id ))
+        c.execute(db_sql.sql_app_insert, (app_id, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 def db_merge_developer_social():
     rows = db_developer.db_get_g(db_sql.sql_merge_developer_app_get_developer_social, ())
@@ -244,6 +261,8 @@ def db_merge_developer_social():
     print '* merge developer_social from %s to %s %d *'%(db_developer.db_path, db_app.db_path, i_t)
     i = 0
     p = 0
+    db = db_app.db
+    c = db.cursor()
     for row in rows:
         developer_website = row[0]
         real_href = row[1]
@@ -254,15 +273,17 @@ def db_merge_developer_social():
         website_read_status = row[6]
         scrape_create_date = row[3]
         scrape_update_date = row[4]
-        db_app.db_execute_g(db_sql.sql_merge_developer_app_insert_developer_social, (developer_website, real_href, twitter_href, facebook_href, google_plus_href, youtube_href, website_read_status, scrape_create_date, scrape_update_date, ))
-        p, i = util.p_percent(p, i, i_t, 1)
+        c.execute(db_sql.sql_merge_developer_app_insert_developer_social, (developer_website, real_href, twitter_href, facebook_href, google_plus_href, youtube_href, website_read_status, scrape_create_date, scrape_update_date, ))
+        p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
     
 
 def from_developer_to_app_developer():
     db_init()
-    #developer_merge()
-    developer_read_store_main()
+    developer_merge()
+    #developer_read_store_main()
 
 def from_app_to_developer_developer():
     db_init()
@@ -281,7 +302,7 @@ def from_app_to_developer_website():
 
 if __name__ == '__main__':
     #from_developer_to_app_developer()
-    #from_app_to_developer_developer()
+    from_app_to_developer_developer()
     #
     #from_developer_to_app_website()
-    from_app_to_developer_website()
+    #from_app_to_developer_website()

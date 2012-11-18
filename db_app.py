@@ -60,8 +60,9 @@ def db_merge(db1, db2):
         rank = row[1]
         sql2 = db_sql.sql_app_insert_with_rank
         c2.execute(sql2, (app_id, rank, ))
-        conn_db2.commit()
-        p, i = util.p_percent(p, i, i_t, 1)
+        #conn_db2.commit()
+        p, i = util.p_percent_copy(p, i, i_t, 1, conn_db2)
+    conn_db2.commit()
     c1.close()
     c2.close()
 
