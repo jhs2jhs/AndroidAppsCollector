@@ -215,13 +215,13 @@ CREATE TABLE IF NOT EXISTS related (
   scrape_update_date TEXT
 );
 CREATE TABLE IF NOT EXISTS related_view (
-  app_id developer_website TEXT NOT NULL,
+  app_id TEXT NOT NULL,
   also_app_id TEXT NOT NULL, 
   place TEXT, -- the order display in the webpage
   UNIQUE (app_id, also_app_id)
 );
 CREATE TABLE IF NOT EXISTS related_install (
-  app_id developer_website TEXT NOT NULL UNIQUE,
+  app_id TEXT NOT NULL UNIQUE,
   also_app_id TEXT NOT NULL, 
   place TEXT, -- the order display in the webpage
   UNIQUE (app_id, also_app_id)

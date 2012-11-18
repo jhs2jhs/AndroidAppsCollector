@@ -131,15 +131,19 @@ def website_read_main():
             print real_href
             if 'facebook.com' in real_href:
                 db_developer.db_execute_g(db_sql.sql_developer_website_facebook_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
                 continue
             if 'twitter.com' in real_href:
                 db_developer.db_execute_g(db_sql.sql_developer_website_twitter_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
                 continue
             if 'plus.google.com' in real_href:
                 db_developer.db_execute_g(db_sql.sql_developer_website_google_plus_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
                 continue
             if 'youtube.com' in real_href:
                 db_developer.db_execute_g(db_sql.sql_developer_website_youtube_update, (real_href, developer_website, ))
+                db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
                 continue
             website_read(developer_website, real_href)
             #break

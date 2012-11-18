@@ -77,7 +77,7 @@ def related_view(app_id, soup):
             i = i + 1
             if div.has_key('data-docid'):
                 also_app_id = div['data-docid']
-                db_app.db_execute_g(db_sql.sql_related_install_insert, (app_id, also_app_id, i, ))
+                db_related.db_execute_g(db_sql.sql_related_install_insert, (app_id, also_app_id, i, ))
                 print '\t', i, also_app_id
 
 def related_install(app_id, soup):
@@ -145,6 +145,8 @@ def db_merge_related_install():
         c.execute(db_sql.sql_merge_related_app_insert_related_install, (app_id, also_app_id, place, ))
         c.execute(db_sql.sql_app_insert, (also_app_id, ))
         p, i = util.p_percent_copy(p, i, i_t, 1, db)
+    db.commit()
+    c.close()
 
 
 def db_merge_main():
