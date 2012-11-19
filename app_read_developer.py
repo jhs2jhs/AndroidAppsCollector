@@ -148,6 +148,7 @@ def website_read_main():
             website_read(developer_website, real_href)
             #break
 
+'''
 import urllib2
 import re
 import mechanize
@@ -176,6 +177,48 @@ def website_read(developer_website, real_href):
         err.except_p(e)
     except urllib2.HTTPError as e:
         err.except_p(e)
+'''
+
+# to be used later, but not now
+def meta_redirect(content):
+    soup = BeautifulSoup(content)
+    result = soup.find('meta', attrs={'http-equiv':'refresh'})
+    if result:
+        #print result
+        wait, text = result['content'].split(';')
+        text = text.strip()
+        if text.lower().startswith('url='):
+            url = text[4:]
+            return url
+    return None
+
+import urllib2
+import re
+def website_read(developer_website, real_href):
+    url = real_href
+    try:
+        opener = urllib2.build_opener()
+        opener.addHeaders = [('User-agent', 'Mozilla/5.1 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/9.0.1')]
+        f = opener.open(url, timeout=20)
+        body = f.read()
+        '''
+        print body
+        refresh_url = meta_redirect(body)
+        while refresh_url:
+            f = opener.open(url, timeout=5)
+            body = f.read()
+            refresh_url = meta_redirect(body)
+            print refresh_url
+        '''
+        soup = BeautifulSoup(body)
+        website_twitter(developer_website, soup)
+        website_facebook(developer_website, soup)
+        website_youtube(developer_website, soup)
+        website_google_plus(developer_website, soup)
+        db_developer.db_execute_g(db_sql.sql_developer_website_read_status_update, (developer_website, ))
+    except Exception as e:
+        err.except_p(e)
+    
 
 def website_twitter(developer_website, soup):
     hrefs = ''
@@ -296,7 +339,7 @@ def from_app_to_developer_developer():
 
 def from_developer_to_app_website():
     db_init()
-    website_merge()
+    #website_merge()
     website_read_main()
 
 def from_app_to_developer_website():
@@ -306,7 +349,7 @@ def from_app_to_developer_website():
 
 if __name__ == '__main__':
     #from_developer_to_app_developer()
-    from_app_to_developer_developer()
+    #from_app_to_developer_developer()
     #
-    #from_developer_to_app_website()
+    from_developer_to_app_website()
     #from_app_to_developer_website()
